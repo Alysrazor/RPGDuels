@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="start_game">Iniciar Juego</string>
+    <string name="menu_options">Ajustes</string>
+    <string name="exit">Salir</string>
+    <string name="character_menu">Personajes</string>
+    <string name="inventory_string">Inventario</string>
+    <string name="shop_string">Tienda</string>
+    <string name="dungeon_string">Mazmorras</string>
+    <string name="home_menu">Inicio</string>
+    <string name="settings_string">Ajustes</string>
+    <string name="mute_music_screen">Silenciar Música</string>
+    <string name="announce_string">Anuncios</string>
+    <string name="mailbox_string">Buzón</string>
+    <string name="player_turn">Turno del Jugador</string>
+    <string name="enemy_turn">Turno del Enemigo</string>
+    <string name="turn_string">Turno</string>
+    <string name="sign_in_text">Iniciar Sesión</string>
+    <string name="sign_up_text">Registrarse</string>
+    <string name="email_text">Correo electrónico:</string>
+    <string name="username_text">Usuario</string>
+    <string name="password_text">Contraseña</string>
+    <string name="error_text">Error</string>
+    <string name="error_api_not_responding">No se ha podido conectar con el servidor.</string>
+    <string name="error_wrong_credentials">Usuario o contraseñas incorrectos. Compruébalos e inicia sesión de nuevo.</string>
+</resources>

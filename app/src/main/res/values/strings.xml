@@ -1,0 +1,39 @@
+<resources>
+    <string name="app_name" translatable="false">RPGDuels</string>
+    <string name="title_activity_splash_screen" translatable="false">SplashScreen</string>
+
+    <string name="title_screen_string_top" translatable="false">RPG</string>
+    <string name="title_screen_string_bottom" translatable="false">Duels</string>
+
+    <!-- Menú de Inicio -->
+    <string name="start_game">Start game</string>
+    <string name="menu_options">Settings</string>
+    <string name="exit">Exit</string>
+    <string name="title_activity_game_menu_screen" translatable="false">GameMenuScreen</string>
+    <string name="title_activity_app_navigation" translatable="false">AppNavigation</string>
+    <string name="title_activity_menu_screen" translatable="false">MenuScreen</string>
+
+    <!-- GameScreen -->
+    <string name="character_menu">Characters</string>
+    <string name="inventory_string">Inventory</string>
+    <string name="shop_string">Shop</string>
+    <string name="dungeon_string">Dungeons</string>
+    <string name="home_menu">Home</string>
+
+    <!-- Settings Menu -->
+    <string name="settings_string">Settings</string>
+    <string name="mute_music_screen">Mute Music</string>
+    <string name="announce_string">Announces</string>
+    <string name="mailbox_string">Mailbox</string>
+    <string name="player_turn">Player Turn</string>
+    <string name="enemy_turn">Enemy Turn</string>
+    <string name="turn_string">Turn</string>
+    <string name="sign_in_text">Sign In</string>
+    <string name="sign_up_text">Sign Up</string>
+    <string name="email_text">E-mail:</string>
+    <string name="username_text">Username</string>
+    <string name="password_text">Password</string>
+    <string name="error_text">Error</string>
+    <string name="error_api_not_responding">Can\'t connect to the server.</string>
+    <string name="error_wrong_credentials">Wrong username or password. Check it and try to log again.</string>
+</resources>
