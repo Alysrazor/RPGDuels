@@ -13,17 +13,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarData
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -40,12 +32,14 @@ import androidx.navigation.NavController
 import com.sercapcab.rpgduels.R
 import com.sercapcab.rpgduels.api.RetrofitSingleton
 import com.sercapcab.rpgduels.api.model.LoginDto
+import com.sercapcab.rpgduels.api.model.RegisterDto
+import com.sercapcab.rpgduels.api.service.AccountAPIService
 import com.sercapcab.rpgduels.api.service.AuthAPIService
+import com.sercapcab.rpgduels.isValidEmail
 import com.sercapcab.rpgduels.ui.navigation.NavScreens
 import com.sercapcab.rpgduels.ui.theme.RPGDuelsTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
@@ -95,11 +89,17 @@ fun LoginScreen(navController: NavController) {
                                     }
 
                                     LoginContent.SignUp -> {
-                                        SignUpContent(finishApp, currentLoginContent, navController)
+                                        SignUpContent(
+                                            currentLoginContent,
+                                            navController
+                                        )
                                     }
 
                                     LoginContent.SignIn -> {
-                                        SignInContent(finishApp, navController)
+                                        SignInContent(
+                                            currentLoginContent,
+                                            navController
+                                        )
                                     }
                                 }
                             }
@@ -115,13 +115,13 @@ fun LoginScreen(navController: NavController) {
 private fun SingUpSingInButtons(context: Activity?, loginStatus: MutableState<LoginContent>) {
     Spacer(modifier = Modifier.padding(top = 40.dp))
     ButtonWithVerticalSpacer(
-        textResId = R.string.sign_in_text,
+        textResId = R.string.string_sign_in_text,
         onClick = {
             loginStatus.value = LoginContent.SignIn
         }
     )
     ButtonWithVerticalSpacer(
-        textResId = R.string.sign_up_text,
+        textResId = R.string.string_sign_up_text,
         onClick = {
             loginStatus.value = LoginContent.SignUp
         }
@@ -136,18 +136,20 @@ private fun SingUpSingInButtons(context: Activity?, loginStatus: MutableState<Lo
 
 @Composable
 private fun SignUpContent(
-    context: Activity?,
     loginStatus: MutableState<LoginContent>,
     navController: NavController
 ) {
-    editText(
-        labelText = stringResource(id = R.string.username_text),
+    val showInvalidEmail = rememberSaveable { mutableStateOf(false) }
+    val showInvalidInputs = rememberSaveable { mutableStateOf(false) }
+    val usernameOrEmailAlreadyInUse = rememberSaveable { mutableStateOf(false) }
+    val user = editText(
+        labelText = stringResource(id = R.string.string_username_text),
     )
-    editText(
-        labelText = stringResource(id = R.string.email_text),
+    val email = editText(
+        labelText = stringResource(id = R.string.string_email_text),
     )
-    editText(
-        labelText = stringResource(id = R.string.password_text),
+    val password = editText(
+        labelText = stringResource(id = R.string.string_password_text),
         password = true
     )
     Spacer(modifier = Modifier.padding(top = 20.dp))
@@ -155,31 +157,76 @@ private fun SignUpContent(
         modifier = Modifier.fillMaxSize(),
         content = {
             ButtonWithHorizontalSpacer(
-                textResId = R.string.sign_up_text,
-                onClick = { TODO("Hacer el funcionamiento del botón") }
+                textResId = R.string.string_sign_up_text,
+                onClick = {
+                    if (!email.isValidEmail()) {
+                        showInvalidEmail.value = true
+                        return@ButtonWithHorizontalSpacer
+                    } else if (user.isEmpty() || password.isEmpty()) {
+                        showInvalidInputs.value = true
+                        return@ButtonWithHorizontalSpacer
+                    }
+
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val validAccount = createAccount(
+                            RegisterDto(username = user, email = email, password = password)
+                        )
+
+                        withContext(Dispatchers.Main) {
+                            if (validAccount)
+                                TODO("Navegar hacia el menu de juego")
+                            else
+                                usernameOrEmailAlreadyInUse.value = true
+                        }
+                    }
+                }
             )
 
             ButtonWithHorizontalSpacer(
                 textResId = R.string.exit,
-                onClick = { context?.finish() }
+                onClick = { loginStatus.value = LoginContent.Login }
             )
+
+            if (showInvalidEmail.value) {
+                ErrorAlertDialog(
+                    onDismissRequest = { showInvalidEmail.value = false },
+                    dialogTitle = R.string.string_error_text,
+                    dialogText = R.string.string_error_wrong_email_pattern
+                )
+            }
+
+            if (showInvalidInputs.value) {
+                ErrorAlertDialog(
+                    onDismissRequest = { showInvalidInputs.value = false },
+                    dialogTitle = R.string.string_error_text,
+                    dialogText = R.string.string_error_wrong_credentials
+                )
+            }
+
+            if (usernameOrEmailAlreadyInUse.value) {
+                ErrorAlertDialog(
+                    onDismissRequest = { usernameOrEmailAlreadyInUse.value = false },
+                    dialogTitle = R.string.string_error_text,
+                    dialogText = R.string.string_account_already_exists
+                )
+            }
         }
     )
 }
 
 @Composable
 private fun SignInContent(
-    context: Activity?,
+    loginStatus: MutableState<LoginContent>,
     navController: NavController,
 ) {
     val isValidUser = rememberSaveable { mutableStateOf(false) }
     val showInvalidUser = rememberSaveable { mutableStateOf(false) }
 
     val user = editText(
-        labelText = stringResource(id = R.string.username_text),
+        labelText = stringResource(id = R.string.string_username_text),
     )
     val password = editText(
-        labelText = stringResource(id = R.string.password_text),
+        labelText = stringResource(id = R.string.string_password_text),
         password = true
     )
     Spacer(modifier = Modifier.padding(top = 20.dp))
@@ -188,7 +235,7 @@ private fun SignInContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         content = {
             ButtonWithVerticalSpacer(
-                textResId = R.string.sign_in_text,
+                textResId = R.string.string_sign_in_text,
                 onClick = {
                     if (user.isEmpty() || password.isEmpty()) {
                         showInvalidUser.value = true
@@ -219,20 +266,27 @@ private fun SignInContent(
 
             ButtonWithVerticalSpacer(
                 textResId = R.string.exit,
-                onClick = { context?.finish() }
+                onClick = { loginStatus.value = LoginContent.Login }
             )
 
             if (showInvalidUser.value) {
                 ErrorAlertDialog(
                     onDismissRequest = { showInvalidUser.value = false },
-                    dialogTitle = R.string.error_text,
-                    dialogText = R.string.error_wrong_credentials
+                    dialogTitle = R.string.string_error_text,
+                    dialogText = R.string.string_error_wrong_credentials
                 )
             }
         }
     )
 }
 
+/**
+ * Comprueba si un usuario existe.
+ *
+ * @param user El usuario a comprobar.
+ * @return - true si el usuario existe.
+ * - false si el usuario no existe.
+ */
 private fun isValidUser(user: LoginDto): Boolean {
     try {
         val retrofit = RetrofitSingleton.getRetrofitInstance()
@@ -247,6 +301,36 @@ private fun isValidUser(user: LoginDto): Boolean {
             Log.d("LoginScreen", "Response Not Successful: ${response?.code()}")
     } catch (ex: SocketTimeoutException) {
         Log.d("LoginScreen", "Socket Timeout Exception: $ex")
+    }
+
+    return false
+}
+
+/**
+ * Crea un nuevo jugador.
+ *
+ * @param account El usuario a crear.
+ * @return - true si el usuario se ha creado correctamente.
+ * - false si el usuario o email ya está en uso.
+ */
+private fun createAccount(account: RegisterDto): Boolean {
+    try {
+        val retrofit = RetrofitSingleton.getRetrofitInstance()
+        val service = retrofit?.create(AuthAPIService::class.java)
+        val call = service?.signUp(account)
+        val response = call?.execute()
+
+        if (response?.isSuccessful == true) {
+            Log.d("LoginScreen", "Response Successful: ${response.code()}")
+            return true
+        } else {
+            Log.d("LoginScreen", "Response Not Successful: ${response?.code()}")
+            if (response?.code() == HttpURLConnection.HTTP_BAD_REQUEST)
+                return false
+        }
+    } catch (ex: SocketTimeoutException) {
+        Log.d("LoginScreen", "Socket Timeout Exception: $ex")
+        return false
     }
 
     return false

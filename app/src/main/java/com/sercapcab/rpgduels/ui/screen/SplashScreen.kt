@@ -27,19 +27,12 @@ import androidx.navigation.NavController
 import com.sercapcab.rpgduels.R
 import com.sercapcab.rpgduels.api.RetrofitSingleton
 import com.sercapcab.rpgduels.api.service.AuthAPIService
-import com.sercapcab.rpgduels.api.service.UnitStatAPIService
 import com.sercapcab.rpgduels.ui.navigation.NavScreens
 import com.sercapcab.rpgduels.ui.theme.RPGDuelsTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.ResponseBody
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import java.net.SocketTimeoutException
 
 @Composable
@@ -47,6 +40,7 @@ fun SplashScreen(navController: NavController) {
     val dataLoaded = rememberSaveable {
         mutableStateOf(false)
     }
+
     val showDialog = rememberSaveable {
         mutableStateOf(false)
     }
@@ -109,8 +103,8 @@ fun SplashScreen(navController: NavController) {
                             val activity = context as Activity
                             activity.finish()
                         },
-                        dialogTitle = R.string.error_text,
-                        dialogText = R.string.error_api_not_responding,
+                        dialogTitle = R.string.string_error_text,
+                        dialogText = R.string.string_error_api_not_responding,
                     )
                 }
             }

@@ -15,12 +15,14 @@
     <string name="player_turn">Turno del Jugador</string>
     <string name="enemy_turn">Turno del Enemigo</string>
     <string name="turn_string">Turno</string>
-    <string name="sign_in_text">Iniciar Sesión</string>
-    <string name="sign_up_text">Registrarse</string>
-    <string name="email_text">Correo electrónico:</string>
-    <string name="username_text">Usuario</string>
-    <string name="password_text">Contraseña</string>
-    <string name="error_text">Error</string>
-    <string name="error_api_not_responding">No se ha podido conectar con el servidor.</string>
-    <string name="error_wrong_credentials">Usuario o contraseñas incorrectos. Compruébalos e inicia sesión de nuevo.</string>
+    <string name="string_sign_in_text">Iniciar Sesión</string>
+    <string name="string_sign_up_text">Registrarse</string>
+    <string name="string_email_text">Correo electrónico:</string>
+    <string name="string_username_text">Usuario</string>
+    <string name="string_password_text">Contraseña</string>
+    <string name="string_error_text">Error</string>
+    <string name="string_error_api_not_responding">No se ha podido conectar con el servidor.</string>
+    <string name="string_error_wrong_credentials">Usuario o contraseñas incorrectos. Compruébalos e inicia sesión de nuevo.</string>
+    <string name="string_error_wrong_email_pattern">Debes proporcionar un correo electrónico válido. Un email válido tiene un \'@\' y un dominio como .com</string>
+    <string name="string_account_already_exists">Ya hay una cuenta con ese nombre de usuario o correo electrónico.</string>
 </resources>

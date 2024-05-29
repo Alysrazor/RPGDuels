@@ -1,6 +1,7 @@
 package com.sercapcab.rpgduels.api.service
 
 import com.sercapcab.rpgduels.api.model.LoginDto
+import com.sercapcab.rpgduels.api.model.RegisterDto
 import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -12,4 +13,7 @@ interface AuthAPIService {
 
     @POST("auth/signin")
     fun signIn(@Body loginRequest: LoginDto): retrofit2.Call<ResponseBody>
+
+    @POST("auth/signup")
+    fun signUp(@Body registerDto: RegisterDto): retrofit2.Call<ResponseBody>
 }

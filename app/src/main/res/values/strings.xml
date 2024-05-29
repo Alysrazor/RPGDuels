@@ -28,12 +28,14 @@
     <string name="player_turn">Player Turn</string>
     <string name="enemy_turn">Enemy Turn</string>
     <string name="turn_string">Turn</string>
-    <string name="sign_in_text">Sign In</string>
-    <string name="sign_up_text">Sign Up</string>
-    <string name="email_text">E-mail:</string>
-    <string name="username_text">Username</string>
-    <string name="password_text">Password</string>
-    <string name="error_text">Error</string>
-    <string name="error_api_not_responding">Can\'t connect to the server.</string>
-    <string name="error_wrong_credentials">Wrong username or password. Check it and try to log again.</string>
+    <string name="string_sign_in_text">Sign In</string>
+    <string name="string_sign_up_text">Sign Up</string>
+    <string name="string_email_text">E-mail:</string>
+    <string name="string_username_text">Username</string>
+    <string name="string_password_text">Password</string>
+    <string name="string_error_text">Error</string>
+    <string name="string_error_api_not_responding">Can\'t connect to the server.</string>
+    <string name="string_error_wrong_credentials">Wrong username or password. Check it and try to log again.</string>
+    <string name="string_error_wrong_email_pattern">You have to put a valid email. A valid email contains a \'@\' and a domain, like .com</string>
+    <string name="string_account_already_exists">There is already an account with that email or username.</string>
 </resources>
