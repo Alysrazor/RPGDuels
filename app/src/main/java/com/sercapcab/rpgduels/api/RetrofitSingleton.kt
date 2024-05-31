@@ -11,7 +11,7 @@ class RetrofitSingleton {
         fun getRetrofitInstance(): Retrofit? {
             return if (retrofit == null) {
                 retrofit = Retrofit.Builder()
-                    .baseUrl("http://192.168.0.190:8080/api/v1/")
+                    .baseUrl("http://192.168.1.13:8080/api/v1/")
                     .addConverterFactory(GsonConverterFactory.create())
                     .build()
                 retrofit

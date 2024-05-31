@@ -174,7 +174,7 @@ private fun SignUpContent(
 
                         withContext(Dispatchers.Main) {
                             if (validAccount)
-                                TODO("Navegar hacia el menu de juego")
+                                navController.navigate(NavScreens.GameMenuScreen.route)
                             else
                                 usernameOrEmailAlreadyInUse.value = true
                         }
