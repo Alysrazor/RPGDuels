@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -14,9 +15,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sercapcab.rpgduels.R
 import com.sercapcab.rpgduels.game.entity.Character
+import com.sercapcab.rpgduels.game.entity.Spell
 import com.sercapcab.rpgduels.ui.screen.TextComposable
 import com.sercapcab.rpgduels.ui.screen.fontFamily
 import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
 import java.util.Locale
 
 private const val TAG = "Combat"
@@ -27,59 +31,47 @@ enum class Turn {
     ENEMY
 }
 
-enum class GameResult {
-    VICTORY,
-    DEFEAT,
-    IN_PROGRESS
+sealed class CombatState {
+    data object Idle : CombatState()
+    data object Running : CombatState()
+    data object Ended : CombatState()
+    data class Updated(val player: Character, val playerAI: Character, val turnNo: Int): CombatState()
+    data class Finished(val winner: Character): CombatState()
 }
 
 class Combat(
-    player: Character,
-    enemy: Character
+    private val player: Character,
+    private val enemy: Character,
+    private val onUpdate: (CombatState) -> Unit
 ): Runnable {
-    var turnNo = 1
-    var whosTurn = Turn.PLAYER
-    var gameResult = GameResult.IN_PROGRESS
-
+    private val combatEnded = false
+    val turnNo = 1
+    val whosTurn = Turn.PLAYER
+    val winner: Character? = null
+    
     override fun run() {
+        onUpdate(CombatState.Running)
 
+        while (!isSomeoneDead()) {
+            when (whosTurn) {
+                Turn.PLAYER -> {
+
+                }
+                Turn.ENEMY -> TODO()
+            }
+        }
     }
 
-    @Composable
-    fun DisplayTurn(
-        modifier: Modifier = Modifier,
-        turnNo: Int,
-        whosTurn: Turn,
-    ) {
-        Row(
-            modifier = Modifier,
-            content = {
-                val textId = when (whosTurn) {
-                    Turn.PLAYER -> R.string.player_turn
-                    Turn.ENEMY -> R.string.enemy_turn
-                }
+    fun playerAction(
+        player: Character,
+        spell: Spell
+    ) = runBlocking {
+        Spell.castSpell(player, spell, enemy).also {
+            onUpdate(CombatState.Updated(player, enemy, turnNo))
+        }
+    }
 
-                TextComposable(
-                    textId = textId,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(paddingValues = PaddingValues(all = 20.dp)),
-                    textStyle = TextStyle(
-                        color = Color.White, fontFamily = fontFamily, fontSize = 32.sp
-                    )
-                )
-
-                Text(
-                    text = String.format(
-                        Locale.getDefault(),
-                        "%s: %d",
-                        stringResource(id = R.string.turn_string),
-                        turnNo
-                    ), modifier = Modifier.weight(1f), textAlign = TextAlign.Center, style = TextStyle(
-                        color = Color.White, fontFamily = fontFamily, fontSize = 32.sp
-                    )
-                )
-            }
-        )
+    private fun isSomeoneDead(): Boolean {
+        return player.getHealth() <= 0 || enemy.getHealth() <= 0
     }
 }

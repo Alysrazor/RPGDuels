@@ -29,7 +29,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -136,12 +135,12 @@ fun ButtonWithHorizontalSpacer(
 fun SpellButton(
     text: String,
     border: BorderStroke = BorderStroke(2.dp, borderBrush),
-    enabled: MutableState<Boolean>,
+    enabled: Boolean,
     onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
-        enabled = enabled.value,
+        enabled = enabled,
         modifier = Modifier
             .widthIn(min = 100.dp, max = 150.dp)
             .height(height = 50.dp),

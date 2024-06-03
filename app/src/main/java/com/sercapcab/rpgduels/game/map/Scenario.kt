@@ -18,8 +18,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +49,10 @@ import com.sercapcab.rpgduels.game.entity.unit.UnitStat
 import com.sercapcab.rpgduels.ui.screen.SpellButton
 import com.sercapcab.rpgduels.ui.screen.TextComposable
 import com.sercapcab.rpgduels.ui.screen.fontFamily
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.util.Locale
 import java.util.UUID
 
@@ -62,6 +68,9 @@ fun Scenario(
     player: Character,
     playerAI: Character,
 ) {
+    // Variables Generales
+    val scope = rememberCoroutineScope()
+
     // Variables de Jugadores
     val characterHealth = rememberSaveable { mutableIntStateOf(player.getHealth()) }
     val characterPower = rememberSaveable { mutableIntStateOf(player.getCurrentPower()) }
@@ -72,8 +81,8 @@ fun Scenario(
     // Variables del Escenario
     val turnNo = rememberSaveable { mutableIntStateOf(1) }
     val whosTurn = rememberSaveable { mutableStateOf(TurnTest.PLAYER) }
-    //val whoWon = rememberSaveable { mutableStateOf<Character?>(null) }
-    val buttonsEnabled = rememberSaveable { mutableStateOf(true) }
+    val whoWon = rememberSaveable { mutableStateOf<Character?>(null) }
+    val buttonsEnabled by rememberSaveable { mutableStateOf(whosTurn.value == TurnTest.PLAYER) }
 
     // Layout del Escenario
     Box(
@@ -128,8 +137,50 @@ fun Scenario(
                     .weight(0.75f)
                     .padding(start = 10.dp, end = 10.dp, bottom = 10.dp),
                 characterSpells = characterSpells,
-                buttonsEnabled = buttonsEnabled
+                buttonsEnabled = buttonsEnabled,
+                onClick = { spell ->
+                    playerAction(
+                        whosTurn,
+                        turnNo,
+                        player,
+                        spell,
+                        playerAI
+                    )
+                }
             )
+        }
+    }
+
+    // Lógica del Escenario
+    if (whosTurn.value == TurnTest.AI_PLAYER) {
+        val spell = playerAI.getUnitSpells().random()
+
+        playerAction(
+            whosTurn,
+            turnNo,
+            playerAI,
+            spell,
+            player
+        )
+    }
+}
+
+fun playerAction(
+    whosTurn: MutableState<TurnTest>,
+    turnNo: MutableIntState,
+    caster: Character,
+    spell: Spell,
+    enemy: Character
+) {
+    Spell.castSpell(caster, spell, enemy)
+
+    when (whosTurn.value) {
+        TurnTest.PLAYER -> {
+            whosTurn.value = TurnTest.AI_PLAYER
+        }
+        TurnTest.AI_PLAYER -> {
+            whosTurn.value = TurnTest.PLAYER
+            turnNo.intValue++
         }
     }
 }
@@ -273,10 +324,11 @@ private fun DisplayCharacterUI(
 }
 
 @Composable
-fun DisplayCharacterSpellsUI(
+private fun DisplayCharacterSpellsUI(
     modifier: Modifier = Modifier,
     characterSpells: MutableState<Set<Spell>>,
-    buttonsEnabled: MutableState<Boolean>
+    buttonsEnabled: Boolean,
+    onClick: (Spell) -> Unit
 ) {
     LazyVerticalGrid(
         modifier = modifier,
@@ -286,7 +338,7 @@ fun DisplayCharacterSpellsUI(
                 SpellButton(
                     text = characterSpells.value.elementAt(spell).name,
                     onClick = {
-                        TODO("Not yet implemented")
+                        onClick(characterSpells.value.elementAt(spell))
                     },
                     enabled = buttonsEnabled
                 )
