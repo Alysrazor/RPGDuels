@@ -1,12 +1,10 @@
 package com.sercapcab.rpgduels.game.map
 
 import android.util.Log
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,7 +16,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -48,330 +47,300 @@ import com.sercapcab.rpgduels.game.entity.unit.UnitStat
 import com.sercapcab.rpgduels.ui.screen.SpellButton
 import com.sercapcab.rpgduels.ui.screen.TextComposable
 import com.sercapcab.rpgduels.ui.screen.fontFamily
-import com.sercapcab.rpgduels.ui.theme.RPGDuelsTheme
 import java.util.Locale
 import java.util.UUID
 
-/**
- * Enumerador que define el turno del juego
- */
-enum class Turn {
-    PLAYER,
-    AI_PLAYER
-}
+private const val TAG = "Scenario"
+private const val LIMIT_OF_TURNS = 50
 
-class Scenario(
-    val player: Account,
-    val playerAI: Account,
-    private val limitOfTurns: Int = 50,
-) {
-    var turnNo = 1
-    var whosTurn = Turn.PLAYER
-    private var whoWon: Account? = null
-
-    fun handlePlayerAction() {
-        // Comprobaciones principales antes de poder avanzar al siguiente turno.
-        when {
-            whoWon != null -> return
-            turnNo >= limitOfTurns && whosTurn == Turn.AI_PLAYER -> whoWon = playerAI
-            player.activeCharacter?.getHealth()?.toInt() == 0 -> whoWon = playerAI
-            playerAI.activeCharacter?.getHealth()?.toInt() == 0 -> whoWon = player
-            else -> {
-                Log.d("Scenario", "Turn: $turnNo")
-                if (whosTurn == Turn.PLAYER)
-                    Log.d("Scenario", "Player turn")
-                else
-                    Log.d("Scenario", "AI Player turn")
-                endTurn()
-            }
-        }
-    }
-
-    private fun endTurn() {
-        if (whosTurn == Turn.PLAYER)
-            whosTurn = Turn.AI_PLAYER
-        else {
-            turnNo++
-            whosTurn = Turn.PLAYER
-        }
-    }
+enum class TurnTest {
+    PLAYER, AI_PLAYER
 }
 
 @Composable
-fun ScenarioComposable(
-    scenario: Scenario,
-    @DrawableRes mapBackground: Int,
+fun Scenario(
+    player: Character,
+    playerAI: Character,
 ) {
-    val player = scenario.player
-    val playerAI = scenario.playerAI
+    // Variables de Jugadores
+    val characterHealth = rememberSaveable { mutableIntStateOf(player.getHealth()) }
+    val characterPower = rememberSaveable { mutableIntStateOf(player.getCurrentPower()) }
+    val characterAIHealth = rememberSaveable { mutableIntStateOf(playerAI.getHealth()) }
+    val characterAIPower = rememberSaveable { mutableIntStateOf(playerAI.getCurrentPower()) }
+    val characterSpells = rememberSaveable { mutableStateOf(player.getUnitSpells()) }
 
-    val characterPlayer = player.activeCharacter!!
-    val characterAIPlayer = playerAI.activeCharacter!!
+    // Variables del Escenario
+    val turnNo = rememberSaveable { mutableIntStateOf(1) }
+    val whosTurn = rememberSaveable { mutableStateOf(TurnTest.PLAYER) }
+    //val whoWon = rememberSaveable { mutableStateOf<Character?>(null) }
+    val buttonsEnabled = rememberSaveable { mutableStateOf(true) }
 
-    val turnNo by rememberSaveable { mutableIntStateOf(scenario.turnNo) }
-    val whosTurn by rememberSaveable { mutableStateOf(scenario.whosTurn) }
-
+    // Layout del Escenario
     Box(
         modifier = Modifier.fillMaxSize(),
-        content = {
-            Image(
-                painter = painterResource(id = mapBackground),
-                contentDescription = "Imagen de fondo de la pantalla principal del juego",
-                contentScale = ContentScale.FillBounds,
-                modifier = Modifier.fillMaxSize()
-            )
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.pantalla_principal),
+            contentDescription = "Imagen del Escenario",
+            contentScale = ContentScale.FillBounds,
+            modifier = Modifier.fillMaxSize()
+        )
 
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                content = {
-                    DisplayTurn(
-                        modifier = Modifier
-                            .weight(0.24f)
-                            .padding(start = 10.dp, top = 20.dp, end = 10.dp),
-                        turnNo = turnNo, whosTurn = whosTurn
-                    )
-                    Text(
-                        text = "[PH] Acciones Turnos",
-                        modifier = Modifier
-                            .weight(0.65f)
-                            .padding(start = 10.dp, end = 10.dp)
-                            .fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    DisplayCharacters(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 10.dp, end = 10.dp),
-                        characterPlayer = characterPlayer,
-                        playerCharacterModel = R.drawable.character_mage,
-                        characterAIPlayer = characterAIPlayer,
-                        aiPlayerCharacterModel = R.drawable.character_paladin
-                    )
-                    DisplayPlayerSpellButtons(
-                        modifier = Modifier
-                            .weight(0.75f)
-                            .padding(start = 10.dp, end = 10.dp, bottom = 10.dp),
-                        character = characterPlayer
-                    )
-                }
+        Column(
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            // Display Turn
+            DisplayTurnUI(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 10.dp, top = 20.dp, end = 10.dp),
+                whosTurn = whosTurn,
+                turnNo = turnNo
             )
-        }
-    )
-}
-
-@Composable
-fun DisplayTurn(
-    modifier: Modifier = Modifier,
-    turnNo: Int,
-    whosTurn: Turn
-) {
-    Row(
-        modifier = modifier,
-        content = {
-            if (whosTurn == Turn.PLAYER) {
-                TextComposable(
-                    textId = R.string.player_turn,
-                    modifier = Modifier
-                        .weight(1f),
-                    textStyle = TextStyle(
-                        color = Color.Blue,
-                        fontFamily = fontFamily,
-                        fontSize = 32.sp
-                    )
-                )
-            } else {
-                TextComposable(
-                    textId = R.string.enemy_turn,
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 10.dp, end = 10.dp)
+            ) {
+                // Display Characters
+                DisplayCharacterUI(
                     modifier = Modifier
                         .weight(1f)
-                        .padding(paddingValues = PaddingValues(all = 20.dp)),
-                    textStyle = TextStyle(
-                        color = Color.Red,
-                        fontFamily = fontFamily,
-                        fontSize = 32.sp
-                    )
+                        .padding(start = 10.dp, end = 10.dp),
+                    character = player,
+                    characterHealth = characterHealth,
+                    characterPower = characterPower
+                )
+                Spacer(modifier = Modifier.width(150.dp))
+                DisplayCharacterUI(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 10.dp, end = 10.dp),
+                    character = playerAI,
+                    characterHealth = characterAIHealth,
+                    characterPower = characterAIPower,
+                    isReversed = true
                 )
             }
 
-            Text(
+            DisplayCharacterSpellsUI(
                 modifier = Modifier
-                    .weight(1f),
-                text = String.format(
-                    Locale.getDefault(),
-                    "%s: %d",
-                    stringResource(id = R.string.turn_string),
-                    turnNo
-                ),
-                textAlign = TextAlign.Center,
-                style = TextStyle(
-                    color = Color.White,
-                    fontFamily = fontFamily,
-                    fontSize = 32.sp
-                )
+                    .weight(0.75f)
+                    .padding(start = 10.dp, end = 10.dp, bottom = 10.dp),
+                characterSpells = characterSpells,
+                buttonsEnabled = buttonsEnabled
             )
         }
-    )
+    }
 }
 
 @Composable
-fun DisplayCharacters(
-    characterPlayer: Character,
-    @DrawableRes playerCharacterModel: Int,
-    characterAIPlayer: Character,
-    @DrawableRes aiPlayerCharacterModel: Int,
-    modifier: Modifier = Modifier
+private fun DisplayTurnUI(
+    modifier: Modifier = Modifier,
+    whosTurn: MutableState<TurnTest>,
+    turnNo: MutableIntState,
 ) {
     Row(
         modifier = modifier,
-        content = {
-            Column(
-                modifier = Modifier.weight(1f),
-                content = {
-                    Image(
-                        painter = painterResource(id = playerCharacterModel),
-                        contentDescription = "Imagen del personaje del jugador",
-                        modifier = Modifier
-                            .weight(0.3f)
-                    )
-                    DisplayHealthAndPowerBars(
-                        modifier = Modifier.weight(0.33f),
-                        character = characterPlayer
-                    )
-                }
+    ) {
+        TextComposable(
+            textId = when (whosTurn.value) {
+                TurnTest.PLAYER -> R.string.player_turn
+                TurnTest.AI_PLAYER -> R.string.enemy_turn
+            },
+            modifier = Modifier
+                .weight(1f),
+            textStyle = TextStyle(
+                color = when (whosTurn.value) {
+                    TurnTest.PLAYER -> Color.Blue
+                    TurnTest.AI_PLAYER -> Color.Red
+                },
+                fontFamily = fontFamily,
+                fontSize = 32.sp
             )
+        )
 
-            Spacer(modifier = Modifier.width(150.dp))
-
-            Column(
-                modifier = Modifier.weight(1f),
-                content = {
-                    Image(
-                        painter = painterResource(id = aiPlayerCharacterModel),
-                        contentDescription = "Imagen del personaje del jugador",
-                        modifier = Modifier
-                            .weight(0.3f)
-                            .graphicsLayer(scaleX = -1f)
-                    )
-                    DisplayHealthAndPowerBars(
-                        modifier = Modifier.weight(0.33f),
-                        character = characterAIPlayer
-                    )
-                }
+        Text(
+            modifier = Modifier
+                .weight(1f),
+            text = String.format(
+                Locale.getDefault(),
+                "%s: %d",
+                stringResource(id = R.string.turn_string),
+                turnNo.intValue
+            ),
+            textAlign = TextAlign.Center,
+            style = TextStyle(
+                color = Color.White,
+                fontFamily = fontFamily,
+                fontSize = 32.sp
             )
-        }
-    )
-}
-
-@Composable
-fun DisplayPlayerSpellButtons(
-    modifier: Modifier = Modifier,
-    character: Character
-) {
-    val spells = character.getUnitSpells()
-
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        modifier = modifier,
-        content = {
-            items(spells.size) { spell ->
-                SpellButton(
-                    text = spells.elementAt(spell).name,
-                    onClick = {
-                        Log.d("DisplayPlayerSpellButtons", "Spell: ${spells.elementAt(spell).name}")
-                    }
-                )
-            }
-        }
-    )
-}
-
-@Composable
-fun DisplayHealthAndPowerBars(
-    modifier: Modifier = Modifier,
-    character: Character
-) {
-    val characterHealth by rememberSaveable { mutableIntStateOf(character.getHealth().toInt()) }
-    val characterMaxHealth by rememberSaveable { mutableIntStateOf(character.getMaxHealth().toInt()) }
-    val characterPowerAmount by rememberSaveable { mutableIntStateOf(character.getCurrentPower().toInt()) }
-    val characterMaxPower by rememberSaveable { mutableIntStateOf(character.getMaxPower().toInt()) }
-
-    val powerColor: Color = when (character.getUnitPowerType()) {
-        PowerType.NONE -> Color.Transparent
-        PowerType.RAGE -> Color.Red
-        PowerType.ENERGY -> Color.Yellow
-        PowerType.MANA -> Color.Blue
+        )
     }
+}
 
-    Column(
-        modifier = modifier,
-        content = {
-            Box(
-                contentAlignment = Alignment.Center,
-                content = {
+@Composable
+private fun DisplayCharacterUI(
+    modifier: Modifier = Modifier,
+    character: Character,
+    characterHealth: MutableIntState,
+    characterPower: MutableIntState,
+    isReversed: Boolean = false,
+) {
+    Row(
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Image(
+                painter = painterResource(id = loadCharacterModel(character = character)),
+                contentDescription = "Imagen del personaje del jugador",
+                modifier = if (isReversed) {
+                    Modifier
+                        .weight(0.3f)
+                        .graphicsLayer(scaleX = -1f)
+                } else {
+                    Modifier
+                        .weight(0.3f)
+                }
+            )
+            Column(
+                modifier = Modifier.weight(0.33f)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                ) {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .width(136.dp)
                             .height(15.dp)
                             .background(Color.Transparent)
                     )
-                    Box(modifier = Modifier
-                        .fillMaxWidth()
-                        .height(15.dp)
-                        .background(Color.Green),
-                        content = {
-                            Text(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                text = "$characterHealth / $characterMaxHealth",
-                                style = TextStyle(
-                                    color = Color.Black,
-                                    fontSize = 14.sp
-                                ),
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    )
-                }
-            )
-
-            if (character.getUnitPowerType() != PowerType.NONE) {
-                Box(
-                    modifier = modifier,
-                    content = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(15.dp)
-                                .background(Color.Transparent)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(15.dp)
-                                .background(powerColor),
-                            content = {
-                                Text(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    text = "$characterPowerAmount / $characterMaxPower",
-                                    style = TextStyle(
-                                        color = Color.Black,
-                                        fontSize = 14.sp
-                                    ),
-                                    textAlign = TextAlign.Center
-                                )
-                            }
+                    Box(
+                        modifier = Modifier
+                            .width(136.dp)
+                            .height(15.dp)
+                            .background(Color.Green)
+                    ) {
+                        Text(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = "${characterHealth.intValue} / ${character.getMaxHealth()}",
+                            style = TextStyle(
+                                color = Color.Black,
+                                fontSize = 14.sp
+                            ),
+                            textAlign = TextAlign.Center
                         )
                     }
+                }
+
+                Box(
+                    contentAlignment = Alignment.Center,
+                ) {
+                    val powerColor: Color = when (character.getUnitPowerType()) {
+                        PowerType.NONE -> Color.Transparent
+                        PowerType.RAGE -> Color.Red
+                        PowerType.ENERGY -> Color.Yellow
+                        PowerType.MANA -> Color.Blue
+                    }
+                    Box(
+                        modifier = Modifier
+                            .width(136.dp)
+                            .height(15.dp)
+                            .background(Color.Transparent)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .width(136.dp)
+                            .height(15.dp)
+                            .background(powerColor)
+                    ) {
+                        Text(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = "${characterPower.intValue} / ${character.getMaxPower()}",
+                            style = TextStyle(
+                                color = Color.White,
+                                fontSize = 14.sp
+                            ),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DisplayCharacterSpellsUI(
+    modifier: Modifier = Modifier,
+    characterSpells: MutableState<Set<Spell>>,
+    buttonsEnabled: MutableState<Boolean>
+) {
+    LazyVerticalGrid(
+        modifier = modifier,
+        columns = GridCells.Fixed(2),
+        content = {
+            items(characterSpells.value.size)  {spell ->
+                SpellButton(
+                    text = characterSpells.value.elementAt(spell).name,
+                    onClick = {
+                        TODO("Not yet implemented")
+                    },
+                    enabled = buttonsEnabled
                 )
             }
         }
     )
 }
 
-@Preview(showSystemUi = false, showBackground = false)
+private fun loadCharacterModel(character: Character): Int {
+    return when (character.getUnitUnitClass()) {
+        UnitClass.CLASS_FIGHTER -> R.drawable.character_warrior
+        UnitClass.CLASS_WIZARD -> R.drawable.character_mage
+        UnitClass.CLASS_PALADIN -> R.drawable.character_paladin
+        UnitClass.CLASS_ROGUE -> R.drawable.character_rogue
+        else -> -1
+    }
+}
+
+private fun handlePlayerAction(
+    turnNo: MutableIntState,
+    whosTurn: MutableState<TurnTest>,
+    whoWon: MutableState<Character?>,
+    player: Character,
+    playerAI: Character,
+    characterHealth: MutableIntState,
+    characterAIHealth: MutableIntState
+) {
+    when {
+        turnNo.intValue > LIMIT_OF_TURNS && whosTurn.value == TurnTest.AI_PLAYER -> whoWon.value =
+            playerAI
+
+        characterHealth.intValue <= 0 -> whoWon.value = playerAI
+        characterAIHealth.intValue <= 0 -> whoWon.value = player
+        else -> {
+            Log.d(TAG, "Turn: $turnNo")
+            when (whosTurn.value) {
+                TurnTest.PLAYER -> {
+                    Log.d(TAG, "Player Turn")
+                    whosTurn.value = TurnTest.AI_PLAYER
+                }
+
+                TurnTest.AI_PLAYER -> {
+                    Log.d(TAG, "AI Player Turn")
+                    turnNo.intValue++
+                    whosTurn.value = TurnTest.PLAYER
+                }
+            }
+        }
+    }
+}
+
+@Preview(showSystemUi = false)
 @Composable
-fun PreviewScenarioComposable() {
+fun ScenarioPreview() {
     val accountPlayer = Account(
         accountUuid = UUID.randomUUID(),
         username = "Alysrazor",
@@ -391,7 +360,7 @@ fun PreviewScenarioComposable() {
     val characterPlayer = Character(
         uuid = UUID.randomUUID(),
         name = "Alysrazor",
-        10u,
+        10,
         UnitClass.CLASS_WIZARD,
         unitDefense = UnitDefense(
             defenses = mapOf(
@@ -414,6 +383,7 @@ fun PreviewScenarioComposable() {
             Spell(
                 uuid = UUID.randomUUID(),
                 name = "Atacar",
+                description = "Ataca al objetivo con el arma",
                 spellSchool = SpellSchool.SCHOOL_SLASHING,
                 baseDamage = 5,
                 basePowerCost = 0,
@@ -423,6 +393,7 @@ fun PreviewScenarioComposable() {
             Spell(
                 uuid = UUID.randomUUID(),
                 name = "Bola de Fuego",
+                description = "Ataca al objetivo con una bola de fuego",
                 spellSchool = SpellSchool.SCHOOL_FIRE,
                 baseDamage = 20,
                 basePowerCost = 15,
@@ -432,6 +403,7 @@ fun PreviewScenarioComposable() {
             Spell(
                 uuid = UUID.randomUUID(),
                 name = "Rayo de escarcha",
+                description = "Ataca al objetivo con un rayo de escarcha",
                 spellSchool = SpellSchool.SCHOOL_COLD,
                 baseDamage = 8,
                 basePowerCost = 5,
@@ -441,6 +413,7 @@ fun PreviewScenarioComposable() {
             Spell(
                 uuid = UUID.randomUUID(),
                 name = "Telekinesis",
+                description = "Ataca al objetivo con telekinesis",
                 spellSchool = SpellSchool.SCHOOL_FORCE,
                 baseDamage = 30,
                 basePowerCost = 20,
@@ -450,6 +423,7 @@ fun PreviewScenarioComposable() {
             Spell(
                 uuid = UUID.randomUUID(),
                 name = "Meteoro",
+                description = "Ataca al objetivo con un meteoro",
                 spellSchool = SpellSchool.SCHOOL_FIRE,
                 baseDamage = 40,
                 basePowerCost = 30,
@@ -464,7 +438,7 @@ fun PreviewScenarioComposable() {
     val characterPlayerAI = Character(
         uuid = UUID.randomUUID(),
         name = "Player",
-        10u,
+        10,
         UnitClass.CLASS_PALADIN,
         unitDefense = UnitDefense(
             defenses = mapOf(
@@ -491,15 +465,10 @@ fun PreviewScenarioComposable() {
     accountPlayer.activeCharacter = characterPlayer
     accountPlayer.activeCharacter = characterPlayerAI
 
-    val scenario = Scenario(
-        player = accountPlayer,
-        playerAI = accountPlayerAI
-    )
 
-    RPGDuelsTheme {
-        ScenarioComposable(
-            scenario = scenario,
-            mapBackground = R.drawable.game_screen,
-        )
-    }
+
+    Scenario(
+        player = characterPlayer,
+        playerAI = characterPlayerAI
+    )
 }

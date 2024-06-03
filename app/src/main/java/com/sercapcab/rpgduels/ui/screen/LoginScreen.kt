@@ -30,20 +30,25 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.sercapcab.rpgduels.R
+import com.sercapcab.rpgduels.RPGDuelsText
+import com.sercapcab.rpgduels.account
 import com.sercapcab.rpgduels.api.RetrofitSingleton
 import com.sercapcab.rpgduels.api.model.LoginDto
 import com.sercapcab.rpgduels.api.model.RegisterDto
-import com.sercapcab.rpgduels.api.service.AccountAPIService
+import com.sercapcab.rpgduels.api.request.getAccountByUsername
 import com.sercapcab.rpgduels.api.service.AuthAPIService
 import com.sercapcab.rpgduels.isValidEmail
 import com.sercapcab.rpgduels.ui.navigation.NavScreens
 import com.sercapcab.rpgduels.ui.theme.RPGDuelsTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
+
+private val TAG = "LoginScreen"
 
 private enum class LoginContent {
     Login,
@@ -142,6 +147,8 @@ private fun SignUpContent(
     val showInvalidEmail = rememberSaveable { mutableStateOf(false) }
     val showInvalidInputs = rememberSaveable { mutableStateOf(false) }
     val usernameOrEmailAlreadyInUse = rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
     val user = editText(
         labelText = stringResource(id = R.string.string_username_text),
     )
@@ -173,8 +180,13 @@ private fun SignUpContent(
                         )
 
                         withContext(Dispatchers.Main) {
-                            if (validAccount)
+                            if (validAccount) {
+                                scope.launch {
+                                    account = getAccountByUsername(username = user, authCredentials = Pair(user, password))?.toAccount()
+                                }.join()
+                                Log.d(TAG, "Account: $account")
                                 navController.navigate(NavScreens.GameMenuScreen.route)
+                            }
                             else
                                 usernameOrEmailAlreadyInUse.value = true
                         }
@@ -221,6 +233,7 @@ private fun SignInContent(
 ) {
     val isValidUser = rememberSaveable { mutableStateOf(false) }
     val showInvalidUser = rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     val user = editText(
         labelText = stringResource(id = R.string.string_username_text),
@@ -243,23 +256,33 @@ private fun SignInContent(
                     }
 
                     CoroutineScope(Dispatchers.IO).launch {
-                        Log.d("LoginScreen", "SignIn Start")
+                        Log.d(TAG, "SignIn Start")
 
                         isValidUser.value = isValidUser(LoginDto(user, password))
-                        Log.d("LoginScreen", "isValidUser: $isValidUser")
+                        Log.d(TAG, "isValidUser: ${isValidUser.value}")
 
                         withContext(Dispatchers.Main) {
                             if (isValidUser.value) {
-                                Log.d("LoginScreen", "Valid User")
-                                navController.navigate(NavScreens.GameMenuScreen.route)
+                                Log.d(TAG, "Valid User")
+
+                                scope.launch {
+                                    val accountFlow = flow {
+                                        emit(getAccountByUsername(username = user, Pair(user, password))?.toAccount())
+                                    }
+
+                                    accountFlow.collect{ acc ->
+                                        account = acc
+                                        navController.navigate(NavScreens.GameMenuScreen.route)
+                                    }
+                                }.join()
                             } else {
                                 showInvalidUser.value = true
-                                Log.d("LoginScreen", "Invalid User")
+                                Log.d(TAG, "Invalid User")
                             }
                         }
 
-                        Log.d("LoginScreen", "Show Invalid User ${showInvalidUser.value}")
-                        Log.d("LoginScreen", "SignIn End")
+                        Log.d(TAG, "Show Invalid User ${showInvalidUser.value}")
+                        Log.d(TAG, "SignIn End")
                     }
                 }
             )
@@ -298,9 +321,9 @@ private fun isValidUser(user: LoginDto): Boolean {
             if (response.code() != HttpURLConnection.HTTP_UNAUTHORIZED)
                 return true
         } else
-            Log.d("LoginScreen", "Response Not Successful: ${response?.code()}")
+            Log.d(TAG, "Response Not Successful: ${response?.code()}")
     } catch (ex: SocketTimeoutException) {
-        Log.d("LoginScreen", "Socket Timeout Exception: $ex")
+        Log.d(TAG, "Socket Timeout Exception: $ex")
     }
 
     return false
@@ -321,15 +344,15 @@ private fun createAccount(account: RegisterDto): Boolean {
         val response = call?.execute()
 
         if (response?.isSuccessful == true) {
-            Log.d("LoginScreen", "Response Successful: ${response.code()}")
+            Log.d(TAG, "Response Successful: ${response.code()}")
             return true
         } else {
-            Log.d("LoginScreen", "Response Not Successful: ${response?.code()}")
+            Log.d(TAG, "Response Not Successful: ${response?.code()}")
             if (response?.code() == HttpURLConnection.HTTP_BAD_REQUEST)
                 return false
         }
     } catch (ex: SocketTimeoutException) {
-        Log.d("LoginScreen", "Socket Timeout Exception: $ex")
+        Log.d(TAG, "Socket Timeout Exception: $ex")
         return false
     }
 

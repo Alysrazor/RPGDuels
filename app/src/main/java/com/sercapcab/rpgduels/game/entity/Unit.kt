@@ -3,6 +3,7 @@ package com.sercapcab.rpgduels.game.entity
 import com.sercapcab.rpgduels.Since
 import com.sercapcab.rpgduels.Works
 import com.sercapcab.rpgduels.api.serializer.UUIDSerializer
+import com.sercapcab.rpgduels.game.entity.exception.NotEnoughPowerException
 import com.sercapcab.rpgduels.game.entity.unit.DefenseType
 import com.sercapcab.rpgduels.game.entity.unit.PowerType
 import com.sercapcab.rpgduels.game.entity.unit.Stat
@@ -12,7 +13,7 @@ import com.sercapcab.rpgduels.game.entity.unit.UnitStat
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
-const val MAX_LEVEL = 10u
+const val MAX_LEVEL = 10
 
 @Serializable
 @Since(version = "1.0")
@@ -21,7 +22,7 @@ sealed class Unit {
     @Serializable(with = UUIDSerializer::class)
     protected abstract val uuid: UUID
     protected abstract var name: String
-    protected abstract var level: UInt
+    protected abstract var level: Int
     protected abstract val unitClass: UnitClass
     protected abstract var unitDefense: UnitDefense
     protected abstract var unitStat: UnitStat
@@ -29,11 +30,11 @@ sealed class Unit {
     protected abstract var powerType: PowerType
 
     // Atributos de clase
-    private var maxHealth: UInt = 0u
-    private var currentHealth: UInt = 0u
+    private var maxHealth: Int = 0
+    private var currentHealth: Int = 0
 
-    private var maxPower: UInt = 0u
-    private var currentPower: UInt = 0u
+    private var maxPower: Int = 0
+    private var currentPower: Int = 0
 
     /// Properties Getters and Setters
     /**
@@ -58,14 +59,14 @@ sealed class Unit {
     /**
      * @return el nivel de la unidad
      */
-    fun getUnitLevel(): UInt = this.level
+    fun getUnitLevel(): Int = this.level
 
     /**
      * Establece el nivel de la unidad
      *
      * @param newLevel el nuevo nivel de la unidad
      */
-    fun setUnitLevel(newLevel: UInt) {
+    fun setUnitLevel(newLevel: Int) {
         if (newLevel > MAX_LEVEL)
             this.level = MAX_LEVEL
         else
@@ -196,22 +197,22 @@ sealed class Unit {
     /**
      * @return obtiene el poder máximo de la unidad
      */
-    fun getMaxPower(): UInt = this.maxPower
+    fun getMaxPower(): Int = this.maxPower
 
     /**
      * @return obtiene el poder actual de la unidad
      */
-    fun getCurrentPower(): UInt = this.currentPower
+    fun getCurrentPower(): Int = this.currentPower
 
     /**
      * Establece la nueva cantidad de poder de la unidad
      *
      * @param newMaxPower la nueva cantidad de poder
      */
-    fun setMaxPower(newMaxPower: UInt) {
-        this.maxPower = if (newMaxPower == 0u) {
-            this.currentPower = 1u
-            1u
+    fun setMaxPower(newMaxPower: Int) {
+        this.maxPower = if (newMaxPower == 0) {
+            this.currentPower = 1
+            1
         }
         else {
             this.currentPower = newMaxPower
@@ -219,12 +220,20 @@ sealed class Unit {
         }
     }
 
+    @Throws (NotEnoughPowerException::class)
+    fun updatePower(amount: Int) {
+        if (getCurrentPower() + amount < 0)
+            throw NotEnoughPowerException("No hay suficiente poder para lanzar el hechizo.")
+
+        this.currentPower += amount
+    }
+
     /// Propiedades de la clase
 
     /**
      * @return la vida máxima de la unidad
      */
-    fun getMaxHealth(): UInt = this.maxHealth
+    fun getMaxHealth(): Int = this.maxHealth
 
     /**
      * Establece el valor máximo de salud de la unidad con el nuevo valor proporcionado.
@@ -234,8 +243,8 @@ sealed class Unit {
      * @throws IllegalArgumentException Si el nuevo valor no está dentro del rango válido (1 a 4294967295).
      */
     @Works
-    fun setMaxHealth(newMaxHealth: UInt) {
-        require(newMaxHealth in 1u..UInt.MAX_VALUE) { "Debe estar en el rango de 1 a 4294967295" }
+    fun setMaxHealth(newMaxHealth: Int) {
+        require(newMaxHealth in 1..Int.MAX_VALUE) { "Debe estar en el rango de 1 a 4294967295" }
 
         this.maxHealth = newMaxHealth
         this.currentHealth = newMaxHealth
@@ -244,16 +253,16 @@ sealed class Unit {
     /**
      * @return la vida actual de la unidad
      */
-    fun getHealth(): UInt = this.currentHealth
+    fun getHealth(): Int = this.currentHealth
 
     /**
      * Establece la vida de la unidad a una cantidad determinada, el valor mínimo que puede ser es de 1.
      *
      * @param newHealth La nueva vida actual para la unidad.
      */
-    fun setNewHealth(newHealth: UInt) {
-        currentHealth = if (newHealth == 0u)
-            1u
+    fun setNewHealth(newHealth: Int) {
+        currentHealth = if (newHealth == 0)
+            1
         else if (newHealth > this.getMaxHealth())
             maxHealth
         else
@@ -276,6 +285,15 @@ sealed class Unit {
         this.unitStat.stats = newStats
     }
 
+    fun takeDamage(damage: Int) {
+        if (damage < 0)
+            return
+        else if (damage > this.getHealth())
+            this.currentHealth = 0
+        else
+            this.currentHealth -= damage
+    }
+
 
     /**
      * Actualiza los puntos de salud máximos y actuales de la unidad cuando cambia de nivel.
@@ -284,50 +302,50 @@ sealed class Unit {
      * @param level El nuevo nivel de la unidad.
      */
     @Works
-    protected fun updateHealthOnLevelOrConstitutionChange(level: UInt) {
-        val firstLevelHP: UInt = when (this.unitClass) {
-            UnitClass.CLASS_BARBARIAN -> (12u + Stat.getModifierChart(
+    protected fun updateHealthOnLevelOrConstitutionChange(level: Int) {
+        val firstLevelHP: Int = when (this.unitClass) {
+            UnitClass.CLASS_BARBARIAN -> (12 + Stat.getModifierChart(
                 this.unitStat.stats.getValue(
                     Stat.STAT_CONSTITUTION
                 )
-            ).toUInt())
-            UnitClass.CLASS_FIGHTER, UnitClass.CLASS_PALADIN, UnitClass.CLASS_RANGER -> (10u + Stat.getModifierChart(
+            ))
+            UnitClass.CLASS_FIGHTER, UnitClass.CLASS_PALADIN, UnitClass.CLASS_RANGER -> (10 + Stat.getModifierChart(
                 this.unitStat.stats.getValue(Stat.STAT_CONSTITUTION)
-            ).toUInt())
+            ))
             UnitClass.CLASS_BARD, UnitClass.CLASS_CLERIC, UnitClass.CLASS_DRUID,
             UnitClass.CLASS_MONK, UnitClass.CLASS_ROGUE, UnitClass.CLASS_WARLOCK ->
-                (8u + Stat.getModifierChart(this.unitStat.stats.getValue(Stat.STAT_CONSTITUTION)).toUInt())
-            UnitClass.CLASS_SORCERER, UnitClass.CLASS_WIZARD -> (6u + Stat.getModifierChart(
+                (8 + Stat.getModifierChart(this.unitStat.stats.getValue(Stat.STAT_CONSTITUTION)))
+            UnitClass.CLASS_SORCERER, UnitClass.CLASS_WIZARD -> (6 + Stat.getModifierChart(
                 this.unitStat.stats.getValue(
                     Stat.STAT_CONSTITUTION
                 )
-            ).toUInt())
+            ))
         }
 
-        val levelUpHealthPoints: UInt = when (this.unitClass) {
-            UnitClass.CLASS_BARBARIAN -> (7u + Stat.getModifierChart(
+        val levelUpHealthPoints: Int = when (this.unitClass) {
+            UnitClass.CLASS_BARBARIAN -> (7 + Stat.getModifierChart(
                 this.unitStat.stats.getValue(
                     Stat.STAT_CONSTITUTION
                 )
-            ).toUInt())
-            UnitClass.CLASS_FIGHTER, UnitClass.CLASS_PALADIN, UnitClass.CLASS_RANGER -> (6u + Stat.getModifierChart(
+            ))
+            UnitClass.CLASS_FIGHTER, UnitClass.CLASS_PALADIN, UnitClass.CLASS_RANGER -> (6 + Stat.getModifierChart(
                 this.unitStat.stats.getValue(Stat.STAT_CONSTITUTION)
-            ).toUInt())
-            UnitClass.CLASS_BARD, UnitClass.CLASS_CLERIC, UnitClass.CLASS_DRUID, UnitClass.CLASS_MONK, UnitClass.CLASS_ROGUE, UnitClass.CLASS_WARLOCK -> (5u + Stat.getModifierChart(
+            ))
+            UnitClass.CLASS_BARD, UnitClass.CLASS_CLERIC, UnitClass.CLASS_DRUID, UnitClass.CLASS_MONK, UnitClass.CLASS_ROGUE, UnitClass.CLASS_WARLOCK -> (5 + Stat.getModifierChart(
                 this.unitStat.stats.getValue(Stat.STAT_CONSTITUTION)
-            ).toUInt())
-            UnitClass.CLASS_SORCERER, UnitClass.CLASS_WIZARD -> (4u + Stat.getModifierChart(
+            ))
+            UnitClass.CLASS_SORCERER, UnitClass.CLASS_WIZARD -> (4 + Stat.getModifierChart(
                 this.unitStat.stats.getValue(
                     Stat.STAT_CONSTITUTION
                 )
-            ).toUInt())
+            ))
         }
 
-        this.maxHealth = if (level.toInt() == 1) {
+        this.maxHealth = if (level == 1) {
             firstLevelHP
         }
         else{
-            firstLevelHP + (levelUpHealthPoints * (level - 1u))
+            firstLevelHP + (levelUpHealthPoints * (level - 1))
         }
 
         this.currentHealth = maxHealth
@@ -340,7 +358,7 @@ sealed class Unit {
         if (!this.unitStat.stats.containsKey(Stat.STAT_INTELLIGENCE))
             return
 
-        this.maxPower = 10u + (this.level * 5u) + (this.unitStat.stats.getValue(Stat.STAT_INTELLIGENCE).toUInt() * 2u) + (Stat.getModifierChart(this.unitStat.stats.getValue(Stat.STAT_INTELLIGENCE)).toUInt() * 10u)
+        this.maxPower = 10 + (this.level * 5) + (this.unitStat.stats.getValue(Stat.STAT_INTELLIGENCE) * 2) + (Stat.getModifierChart(this.unitStat.stats.getValue(Stat.STAT_INTELLIGENCE)) * 10)
         this.currentPower = this.maxPower
     }
 
@@ -358,9 +376,9 @@ sealed class Unit {
         }
 
         when (this.powerType) {
-            PowerType.RAGE, PowerType.ENERGY -> this.maxPower = 100u
+            PowerType.RAGE, PowerType.ENERGY -> this.maxPower = 100
             PowerType.MANA -> {
-                this.maxPower = 10u + (this.level * 5u) + (this.unitStat.stats.getValue(Stat.STAT_INTELLIGENCE).toUInt() * 2u) + (Stat.getModifierChart(this.unitStat.stats.getValue(Stat.STAT_INTELLIGENCE)).toUInt() * 10u)
+                this.maxPower = 10 + (this.level * 5) + (this.unitStat.stats.getValue(Stat.STAT_INTELLIGENCE) * 2) + (Stat.getModifierChart(this.unitStat.stats.getValue(Stat.STAT_INTELLIGENCE)) * 10)
                 this.currentPower = this.maxPower
             }
             else -> maxPower

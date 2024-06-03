@@ -2,18 +2,22 @@ package com.sercapcab.rpgduels.api.request
 
 import android.util.Log
 import com.sercapcab.rpgduels.api.RetrofitSingleton
-import com.sercapcab.rpgduels.api.model.Character
+import com.sercapcab.rpgduels.api.model.CharacterData
 import com.sercapcab.rpgduels.api.service.CharacterAPIService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.Credentials
 import java.util.UUID
 
-suspend fun getCharacters(): List<Character> {
+suspend fun getCharacters(authCredentials: Pair<String, String>): List<CharacterData> {
     return withContext(Dispatchers.IO) {
         try {
             val retrofit = RetrofitSingleton.getRetrofitInstance()
             val service = retrofit?.create(CharacterAPIService::class.java)
-            val call = service?.getCharacters()
+
+            val authentication = Credentials.basic(authCredentials.first, authCredentials.second)
+
+            val call = service?.getCharacters(authentication)
             val response = call?.execute()
 
             if (response?.isSuccessful == true) {
@@ -28,12 +32,15 @@ suspend fun getCharacters(): List<Character> {
     }
 }
 
-suspend fun getCharacter(id: UUID): Character? {
+suspend fun getCharacter(id: UUID, authCredentials: Pair<String, String>): CharacterData? {
     return withContext(Dispatchers.IO) {
         try {
             val retrofit = RetrofitSingleton.getRetrofitInstance()
             val service = retrofit?.create(CharacterAPIService::class.java)
-            val call = service?.getCharacterById(id)
+
+            val authentication = Credentials.basic(authCredentials.first, authCredentials.second)
+
+            val call = service?.getCharacterById(authentication, id)
             val response = call?.execute()
 
             if (response?.isSuccessful == true) {
@@ -48,12 +55,15 @@ suspend fun getCharacter(id: UUID): Character? {
     }
 }
 
-suspend fun addCharacter(character: Character): Character? {
+suspend fun addCharacter(character: CharacterData, authCredentials: Pair<String, String>): CharacterData? {
     return withContext(Dispatchers.IO) {
         try {
             val retrofit = RetrofitSingleton.getRetrofitInstance()
             val service = retrofit?.create(CharacterAPIService::class.java)
-            val call = service?.createCharacter(character)
+
+            val authentication = Credentials.basic(authCredentials.first, authCredentials.second)
+
+            val call = service?.createCharacter(authentication, character)
             val response = call?.execute()
 
             if (response?.isSuccessful == true) {
@@ -68,12 +78,15 @@ suspend fun addCharacter(character: Character): Character? {
     }
 }
 
-suspend fun updateCharacter(id: UUID, character: Character): Character? {
+suspend fun updateCharacter(id: UUID, character: CharacterData, authCredentials: Pair<String, String>): CharacterData? {
     return withContext(Dispatchers.IO) {
         try {
             val retrofit = RetrofitSingleton.getRetrofitInstance()
             val service = retrofit?.create(CharacterAPIService::class.java)
-            val call = service?.updateCharacter(id, character)
+
+            val authentication = Credentials.basic(authCredentials.first, authCredentials.second)
+
+            val call = service?.updateCharacter(authentication, id, character)
             val response = call?.execute()
 
             if (response?.isSuccessful == true) {
@@ -87,4 +100,3 @@ suspend fun updateCharacter(id: UUID, character: Character): Character? {
         }
     }
 }
-

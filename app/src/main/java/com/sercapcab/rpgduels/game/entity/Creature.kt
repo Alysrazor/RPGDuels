@@ -20,7 +20,7 @@ class Creature(
     override var name: String,
 
     @get:JvmName("getCreatureLevel")
-    override var level: UInt,
+    override var level: Int,
 
     @get:JvmName("getCreatureUnitClass")
     override val unitClass: UnitClass,
@@ -35,7 +35,7 @@ class Creature(
     override var spells: Set<Spell>,
 
     @get:JvmName("getCreaturePowerType")
-    override var powerType: PowerType
+    override var powerType: PowerType = PowerType.NONE
 ): Unit() {
     init{
         if (this.level > MAX_LEVEL)

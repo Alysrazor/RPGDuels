@@ -5,7 +5,7 @@ import com.sercapcab.rpgduels.game.entity.unit.Stat.*
 import com.sercapcab.rpgduels.game.entity.unit.UnitStat
 import java.util.UUID
 
-data class UnitStat(
+data class UnitStatData(
     @SerializedName("uuid") val uuid: UUID,
     @SerializedName("strength") var strength: Int,
     @SerializedName("dexterity") var dexterity: Int,

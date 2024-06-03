@@ -1,7 +1,9 @@
 package com.sercapcab.rpgduels.game.entity
 
+import android.util.Log
 import com.sercapcab.rpgduels.Since
 import com.sercapcab.rpgduels.api.serializer.UUIDSerializer
+import com.sercapcab.rpgduels.game.entity.exception.NotEnoughPowerException
 import com.sercapcab.rpgduels.game.entity.unit.Stat
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -65,12 +67,26 @@ data class Spell(
     @Serializable(with = UUIDSerializer::class)
     val uuid: UUID,
     val name: String,
+    val description: String,
     val spellSchool: SpellSchool,
     val baseDamage: Int,
     val basePowerCost: Int,
     val statModifier: Stat,
     val statMultiplier: Double
 ) {
+    companion object {
+        fun castSpell(caster: Unit, spell: Spell, target: Unit) {
+            val spellDamage = spell.getSpellDamage(caster)
+            val spellPowerCost = spell.basePowerCost
+
+            try {
+                caster.updatePower(-spellPowerCost)
+                target.takeDamage(spellDamage)
+            } catch(ex: NotEnoughPowerException) {
+                Log.d("Spell", "$caster tried to cast $spell but not enough power.")
+            }
+        }
+    }
     /**
      * Calcula el daño en base al daño base del hechizo más el modificador del lanzador
      *

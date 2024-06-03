@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.sercapcab.rpgduels.R
+import com.sercapcab.rpgduels.RPGDuelsText
 import com.sercapcab.rpgduels.api.RetrofitSingleton
 import com.sercapcab.rpgduels.api.service.AuthAPIService
 import com.sercapcab.rpgduels.ui.navigation.NavScreens

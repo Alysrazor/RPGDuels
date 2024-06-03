@@ -20,7 +20,7 @@ class Character(
     override var name: String,
 
     @get:JvmName(name = "getCharacterLevel")
-    override var level: UInt,
+    override var level: Int,
 
     @get:JvmName(name = "getCharacterClass")
     override var unitClass: UnitClass,

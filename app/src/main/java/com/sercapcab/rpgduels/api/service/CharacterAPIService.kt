@@ -1,8 +1,9 @@
 package com.sercapcab.rpgduels.api.service
 
-import com.sercapcab.rpgduels.api.model.Character
+import com.sercapcab.rpgduels.api.model.CharacterData
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -10,15 +11,24 @@ import java.util.UUID
 
 interface CharacterAPIService {
     @GET("character")
-    fun getCharacters(): retrofit2.Call<List<Character>>
+    fun getCharacters(
+        @Header("Authorization") authHeader: String,
+    ): retrofit2.Call<List<CharacterData>>
 
     @GET("character/{id}")
-    fun getCharacterById(@Path("id") id: UUID): retrofit2.Call<Character>
+    fun getCharacterById(
+        @Header("Authorization") authHeader: String,
+        @Path("id") id: UUID
+    ): retrofit2.Call<CharacterData>
 
     @POST("character")
-    fun createCharacter(@Body character: Character): retrofit2.Call<Character>
+    fun createCharacter(
+        @Header("Authorization") authHeader: String,
+        @Body character: CharacterData
+    ): retrofit2.Call<CharacterData>
 
     @PUT("character/{id}")
-    fun updateCharacter(@Path("id")id: UUID, @Body character: Character): retrofit2.Call<Character>
-
+    fun updateCharacter(
+        @Header("Authorization") authHeader: String,
+        @Path("id")id: UUID, @Body character: CharacterData): retrofit2.Call<CharacterData>
 }

@@ -5,10 +5,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.sercapcab.rpgduels.ui.screen.LoginScreen
-import com.sercapcab.rpgduels.ui.screen.game.GameMenuScreen
-import com.sercapcab.rpgduels.ui.screen.MenuScreen
-import com.sercapcab.rpgduels.ui.screen.SettingsScreen
 import com.sercapcab.rpgduels.ui.screen.SplashScreen
+import com.sercapcab.rpgduels.ui.screen.game.GameMenuScreen
 
 @Composable
 fun AppNavigation() {
@@ -21,14 +19,8 @@ fun AppNavigation() {
         composable(route = NavScreens.LoginScreen.route) {
             LoginScreen(navController = navController)
         }
-        composable(route = NavScreens.MainMenuScreen.route) {
-            MenuScreen(navController = navController)
-        }
         composable(route = NavScreens.GameMenuScreen.route) {
             GameMenuScreen(navController = navController)
-        }
-        composable(route = NavScreens.SettingsScreen.route) {
-            SettingsScreen(navController = navController)
         }
     }
 }
