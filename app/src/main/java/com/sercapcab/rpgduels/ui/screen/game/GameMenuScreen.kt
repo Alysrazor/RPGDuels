@@ -52,8 +52,6 @@ fun GameMenuScreen(navController: NavController) {
                     .weight(1.0f, false)
                     .fillMaxSize()
 
-                //TopBar(modifier = Modifier.weight(0.08f))
-
                 Box(
                     modifier = Modifier
                         .weight(1.0f, false)
@@ -106,7 +104,7 @@ fun TopBar(modifier: Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color.Gray.copy(alpha = 0.7f)),
+            .background(Color.Gray.copy(alpha = 0.2f)),
         content = {
             Box(
                 modifier = Modifier

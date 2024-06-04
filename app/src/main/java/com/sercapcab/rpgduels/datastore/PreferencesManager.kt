@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.datastore: DataStore<Preferences> by preferencesDataStore(name = "user_settings")
@@ -34,6 +35,12 @@ class PreferencesManager(private val context: Context) {
 
     val activeCharacterIdFlow: Flow<String?> = context.datastore.data.map { preferences ->
         preferences[ACTIVE_CHARACTER_ID] ?: ""
+    }
+
+    suspend fun getCredentials(): Pair<String, String> {
+        val username = context.datastore.data.first()[USERNAME] ?: ""
+        val password = context.datastore.data.first()[PASSWORD] ?: ""
+        return Pair(username, password)
     }
 
     /**

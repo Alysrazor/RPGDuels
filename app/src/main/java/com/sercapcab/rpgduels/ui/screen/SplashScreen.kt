@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,18 +27,24 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.sercapcab.rpgduels.R
 import com.sercapcab.rpgduels.RPGDuelsText
+import com.sercapcab.rpgduels.account
 import com.sercapcab.rpgduels.api.RetrofitSingleton
+import com.sercapcab.rpgduels.api.service.AccountAPIService
 import com.sercapcab.rpgduels.api.service.AuthAPIService
+import com.sercapcab.rpgduels.datastore.PreferencesManager
 import com.sercapcab.rpgduels.ui.navigation.NavScreens
 import com.sercapcab.rpgduels.ui.theme.RPGDuelsTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import okhttp3.Credentials
 import java.net.SocketTimeoutException
 
 @Composable
 fun SplashScreen(navController: NavController) {
+    val scope = rememberCoroutineScope()
+    val preferencesManager = PreferencesManager(LocalContext.current)
     val dataLoaded = rememberSaveable {
         mutableStateOf(false)
     }
@@ -89,8 +96,34 @@ fun SplashScreen(navController: NavController) {
                     apiRequest.collect { success ->
                         dataLoaded.value = success
 
-                        if (success)
-                            navController.navigate(NavScreens.LoginScreen.route)
+                        if (success) {
+                            if (preferencesManager.getCredentials().toList().isNotEmpty()) {
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    val credentials = Credentials.basic(preferencesManager.getCredentials().first, preferencesManager.getCredentials().second)
+                                    try {
+                                        val retrofit = RetrofitSingleton.getRetrofitInstance()
+                                        val service = retrofit?.create(AccountAPIService::class.java)
+                                        val call = service?.getAccountByUsername(preferencesManager.getCredentials().first, authHeader = credentials)
+                                        val response = call?.execute()
+
+                                        if (response!!.isSuccessful) {
+                                            account = response.body()!!.toAccount()
+                                            Log.d("SplashScreen", "Account loaded: ${account?.username} ${account?.email}")
+                                        }
+                                    } catch(ex: SocketTimeoutException) {
+                                        Log.d("SplashScreen", "Api is not responding")
+                                    }
+                                }.join()
+
+                                if (account != null)
+                                {
+                                    scope.launch {
+                                        navController.navigate(NavScreens.GameMenuScreen.route)
+                                    }
+                                } else
+                                    navController.navigate(NavScreens.LoginScreen.route)
+                            }
+                        }
                         else {
                             showDialog.value = true
                             Log.d("SplashScreen", "API Not responding")

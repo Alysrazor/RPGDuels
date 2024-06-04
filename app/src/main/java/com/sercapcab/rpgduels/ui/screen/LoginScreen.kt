@@ -33,10 +33,16 @@ import com.sercapcab.rpgduels.R
 import com.sercapcab.rpgduels.RPGDuelsText
 import com.sercapcab.rpgduels.account
 import com.sercapcab.rpgduels.api.RetrofitSingleton
+import com.sercapcab.rpgduels.api.model.AccountData
+import com.sercapcab.rpgduels.api.model.CharacterData
 import com.sercapcab.rpgduels.api.model.LoginDto
 import com.sercapcab.rpgduels.api.model.RegisterDto
+import com.sercapcab.rpgduels.api.model.UnitStatData
 import com.sercapcab.rpgduels.api.request.getAccountByUsername
 import com.sercapcab.rpgduels.api.service.AuthAPIService
+import com.sercapcab.rpgduels.datastore.PreferencesManager
+import com.sercapcab.rpgduels.game.entity.Account
+import com.sercapcab.rpgduels.game.entity.unit.UnitClass
 import com.sercapcab.rpgduels.isValidEmail
 import com.sercapcab.rpgduels.ui.navigation.NavScreens
 import com.sercapcab.rpgduels.ui.theme.RPGDuelsTheme
@@ -47,8 +53,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
+import java.util.UUID
 
-private val TAG = "LoginScreen"
+private const val TAG = "LoginScreen"
 
 private enum class LoginContent {
     Login,
@@ -144,6 +151,7 @@ private fun SignUpContent(
     loginStatus: MutableState<LoginContent>,
     navController: NavController
 ) {
+    val preferencesManager = PreferencesManager(LocalContext.current)
     val showInvalidEmail = rememberSaveable { mutableStateOf(false) }
     val showInvalidInputs = rememberSaveable { mutableStateOf(false) }
     val usernameOrEmailAlreadyInUse = rememberSaveable { mutableStateOf(false) }
@@ -163,6 +171,7 @@ private fun SignUpContent(
     Row(
         modifier = Modifier.fillMaxSize(),
         content = {
+
             ButtonWithHorizontalSpacer(
                 textResId = R.string.string_sign_up_text,
                 onClick = {
@@ -184,7 +193,14 @@ private fun SignUpContent(
                                 scope.launch {
                                     account = getAccountByUsername(username = user, authCredentials = Pair(user, password))?.toAccount()
                                 }.join()
-                                Log.d(TAG, "Account: $account")
+                                Log.d(TAG, "Account: ${account.toString()}")
+                                scope.launch {
+                                    preferencesManager.firstLoginFlow.collect {firstLogin ->
+                                        if (firstLogin) {
+                                            preferencesManager.saveAllVariables(false, user, password, null)
+                                        }
+                                    }
+                                }
                                 navController.navigate(NavScreens.GameMenuScreen.route)
                             }
                             else
