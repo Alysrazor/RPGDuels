@@ -17,7 +17,7 @@ data class CharacterData(
     @SerializedName("unitClass") var unitClass: UnitClass,
     @SerializedName("characterStat") var characterStat: UnitStatData,
     @SerializedName("unitModel") var unitModel: Int,
-    @SerializedName("spells") var spellData: Set<SpellData>,
+    @SerializedName("characterSpells") var spellData: Set<SpellData>?,
     @SerializedName("account") var account: AccountData
 ) {
     fun toCharacter(): Character {
@@ -33,7 +33,7 @@ data class CharacterData(
                 )
             ),
             unitStat = characterStat.toUnitStat(),
-            spells = spellData.map{ it.toSpell() }.toSet(),
+            spells = spellData?.map{ it.toSpell() }?.toSet(),
             powerType = PowerType.NONE,
             account = account.toAccount()
         )

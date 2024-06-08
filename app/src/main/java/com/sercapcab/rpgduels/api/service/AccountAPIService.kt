@@ -1,6 +1,7 @@
 package com.sercapcab.rpgduels.api.service
 
 import com.sercapcab.rpgduels.api.model.AccountData
+import com.sercapcab.rpgduels.api.model.CharacterData
 import com.sercapcab.rpgduels.api.model.RegisterDto
 import retrofit2.Call
 import retrofit2.http.Body
@@ -21,6 +22,12 @@ interface AccountAPIService {
         @Header("Authorization") authHeader: String,
         @Path("email") email: String
     ): Call<AccountData>
+
+    @GET("account/characters/{username}")
+    fun getCharactersFromAccount(
+        @Header("Authorization") authHeader: String,
+        @Path("username") username: String
+    ): Call<List<CharacterData>>
 
     @POST("account/")
     fun createAccount(@Body account: RegisterDto): Call<AccountData>

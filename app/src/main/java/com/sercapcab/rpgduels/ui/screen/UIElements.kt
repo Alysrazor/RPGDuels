@@ -17,8 +17,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
@@ -29,7 +31,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,6 +68,33 @@ val borderBrush = Brush.verticalGradient(
     endY = 100f
 )
 
+@Composable
+fun MyButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    @StringRes textId: Int,
+    enabled: Boolean = true,
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        border = BorderStroke(2.dp, borderBrush),
+        shape = CutCornerShape(4.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Gray.copy(alpha = 0.25f)
+        ),
+        enabled = enabled,
+        content = {
+            Text(
+                text = stringResource(id = textId),
+                fontFamily = fontFamily,
+                fontSize = 28.sp,
+                letterSpacing = 3.sp,
+            )
+        }
+    )
+}
+
 /**
  * Composable que muestra un botón con un espacio vertical alrededor de él.
  *
@@ -76,7 +104,8 @@ val borderBrush = Brush.verticalGradient(
 @Composable
 fun ButtonWithVerticalSpacer(
     @StringRes textResId: Int,
-    onClick: () -> Unit) {
+    onClick: () -> Unit,
+) {
     Button(
         onClick = onClick,
         border = BorderStroke(2.dp, borderBrush),
@@ -99,13 +128,44 @@ fun ButtonWithVerticalSpacer(
 /**
  * Composable que muestra un botón con un espacio vertical alrededor de él.
  *
+ * @param text El texto
+ * @param onClick La acción que se ejecutará cuando se haga clic en el botón.
+ */
+@Composable
+fun ButtonWithVerticalSpacer(
+    text: String,
+    onClick: () -> Unit,
+) {
+    Button(
+        onClick = onClick,
+        border = BorderStroke(2.dp, borderBrush),
+        shape = CutCornerShape(4.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Gray.copy(alpha = 0.25f)
+        ),
+        content = {
+            Text(
+                text = text,
+                fontFamily = fontFamily,
+                fontSize = 28.sp,
+                letterSpacing = 3.sp,
+            )
+        }
+    )
+    Spacer(Modifier.padding(bottom = 25.dp))
+}
+
+/**
+ * Composable que muestra un botón con un espacio vertical alrededor de él.
+ *
  * @param textResId El recurso de cadena que se mostrará en el botón.
  * @param onClick La acción que se ejecutará cuando se haga clic en el botón.
  */
 @Composable
 fun ButtonWithHorizontalSpacer(
     @StringRes textResId: Int,
-    onClick: () -> Unit) {
+    onClick: () -> Unit,
+) {
     Button(
         onClick = onClick,
         border = BorderStroke(2.dp, borderBrush),
@@ -136,14 +196,14 @@ fun ButtonWithHorizontalSpacer(
 fun SpellButton(
     text: String,
     border: BorderStroke = BorderStroke(2.dp, borderBrush),
-    enabled: MutableState<Boolean>,
-    onClick: () -> Unit
+    enabled: Boolean,
+    onClick: () -> Unit,
 ) {
     Button(
         onClick = onClick,
-        enabled = enabled.value,
+        enabled = enabled,
         modifier = Modifier
-            .widthIn(min = 100.dp, max = 150.dp)
+            .width(180.dp)
             .height(height = 50.dp),
         border = border,
         shape = CutCornerShape(4.dp),
@@ -173,7 +233,7 @@ fun TextWithBorder(
     @StringRes textId: Int,
     border: BorderStroke,
     paddingValues: PaddingValues,
-    textStyle: TextStyle
+    textStyle: TextStyle,
 ) {
     Text(
         text = stringResource(id = textId),
@@ -201,7 +261,7 @@ fun TextComposable(
         fontFamily = fontFamily,
         fontSize = 32.sp,
         color = Color.White
-    )
+    ),
 ) {
     Text(
         text = stringResource(id = textId),
@@ -224,10 +284,10 @@ fun TextComposable(
 fun IconButtonElement(
     width: Dp = 60.dp,
     height: Dp = 60.dp,
-    paddingValues: PaddingValues = PaddingValues(start = 16.dp),
+    paddingValues: PaddingValues = PaddingValues(start = 28.dp),
     onClick: () -> Unit,
     @DrawableRes drawableId: Int,
-    @StringRes stringId: Int
+    @StringRes stringId: Int,
 ) {
     IconButton(
         onClick = onClick,
@@ -249,7 +309,61 @@ fun IconButtonElement(
                             .padding()
                     )
                     Text(
+                        modifier = Modifier.wrapContentHeight(),
                         text = stringResource(id = stringId),
+                        style = TextStyle(
+                            fontFamily = fontFamily,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 15.sp,
+                            color = Color.White
+                        )
+                    )
+                }
+            )
+        }
+    )
+}
+
+/**
+ * Un botón de icono que se puede personalizar.
+ *
+ * @param width la anchura del icono
+ * @param height la altura del icono
+ * @param paddingValues los padding del icono
+ * @param drawableId el recurso drawable
+ * @param text el texto.
+ */
+@Composable
+fun IconButtonElement(
+    width: Dp = 60.dp,
+    height: Dp = 60.dp,
+    paddingValues: PaddingValues = PaddingValues(start = 16.dp),
+    onClick: () -> Unit,
+    @DrawableRes drawableId: Int,
+    text: String,
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .background(color = Color.Transparent, shape = RectangleShape)
+            .padding(paddingValues)
+            .size(width = width, height = height),
+        content = {
+            Column(
+                modifier = Modifier.size(width = width, height = height),
+                verticalArrangement = Arrangement.Bottom,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                content = {
+                    Image(
+                        painter = painterResource(id = drawableId),
+                        contentDescription = "Icono",
+                        modifier = Modifier
+                            .size(width = 60.dp, height = 40.dp)
+                            .padding()
+                    )
+                    Text(
+                        modifier = Modifier.wrapContentHeight(),
+                        text = text,
                         style = TextStyle(
                             fontFamily = fontFamily,
                             fontWeight = FontWeight.Normal,
@@ -278,8 +392,7 @@ fun ImageButton(
     onClick: () -> Unit,
     @StringRes textId: Int,
     textColor: Color,
-    textSize: TextUnit
-
+    textSize: TextUnit,
 ) {
     Column(
         modifier = Modifier
@@ -297,6 +410,64 @@ fun ImageButton(
             Text(
                 text = stringResource(id = textId),
                 modifier = Modifier.weight(1.0f),
+                style = TextStyle(
+                    fontFamily = fontFamily,
+                    fontSize = textSize,
+                    color = textColor,
+                    textAlign = TextAlign.Center
+                )
+            )
+        }
+    )
+}
+
+/**
+ * Composable que muestra una imagen que puede ser cliqueable y un texto.
+ *
+ * @param painter El objeto Painter que representa la imagen a mostrar en el botón.
+ * @param onClick La acción que se ejecutará cuando se haga clic en el botón.
+ * @param text El texto
+ * @param textColor El color del texto.
+ * @param textSize El tamaño del texto
+ */
+@Composable
+fun ImageButton(
+    painter: Painter,
+    onClick: () -> Unit,
+    text: String,
+    textColor: Color,
+    textSize: TextUnit,
+    border: BorderStroke = BorderStroke(2.dp, borderBrush),
+    buttonIndex: Int = 0,
+    selectedButton: Boolean,
+) {
+    Column(
+        modifier = if (selectedButton) {
+            Modifier
+                .height(150.dp)
+                .width(100.dp)
+                .border(border)
+                .clickable { onClick() }
+        } else {
+            Modifier
+                .height(150.dp)
+                .width(100.dp)
+                .clickable { onClick() }
+        },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        content = {
+            Image(
+                modifier = Modifier
+                    .weight(1.0f)
+                    .widthIn(min = 75.dp, max = 100.dp),
+                painter = painter,
+                contentDescription = null
+            )
+            Text(
+                text = text,
+                modifier = Modifier
+                    .weight(0.5f)
+                    .widthIn(min = 75.dp, max = 100.dp),
                 style = TextStyle(
                     fontFamily = fontFamily,
                     fontSize = textSize,
@@ -390,7 +561,61 @@ fun ErrorAlertDialog(
                     Spacer(modifier = Modifier.height(16.dp))
                     ButtonWithVerticalSpacer(
                         onClick = onDismissRequest,
-                        textResId = R.string.exit)
+                        textResId = R.string.exit
+                    )
+                }
+            )
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MyAlertDialog(
+    onDismissRequest: () -> Unit,
+    @StringRes dialogTitle: Int,
+    @StringRes dialogText: Int,
+) {
+    BasicAlertDialog(
+        onDismissRequest = { onDismissRequest() },
+        modifier = Modifier
+            .border(brush = borderBrush, width = 4.dp, shape = CutCornerShape(4.dp))
+            .background(
+                color = Color.White.copy(alpha = 0.85f),
+                shape = CutCornerShape(size = 4.dp)
+            ),
+        content = {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                content = {
+                    Image(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Icono Info",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = stringResource(id = dialogTitle),
+                        style = TextStyle(
+                            fontFamily = fontFamily,
+                            fontSize = 32.sp,
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(id = dialogText),
+                        style = TextStyle(
+                            fontFamily = fontFamily,
+                            fontSize = 20.sp,
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ButtonWithVerticalSpacer(
+                        onClick = onDismissRequest,
+                        textResId = R.string.exit
+                    )
                 }
             )
         }

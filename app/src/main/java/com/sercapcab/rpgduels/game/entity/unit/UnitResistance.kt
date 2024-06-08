@@ -1,8 +1,11 @@
 package com.sercapcab.rpgduels.game.entity.unit
 
+import android.util.Log
 import com.sercapcab.rpgduels.Since
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+
+private const val TAG = "UnitDefense"
 
 @ApiStatus.Experimental
 @Since(version = "1.0")
@@ -28,7 +31,9 @@ class UnitDefense(
          * @return la cantidad de daño reducida.
          */
         fun calculateDamageReduction(armorAmount: Int): Double {
-            return 100.0 / (100.0 + armorAmount)
+            Log.d(TAG, "armorAmount: $armorAmount")
+            Log.d(TAG, "calculateDamageReduction: ${100.0 / (100.0 + armorAmount.toDouble())}")
+            return 100.0 / (100.0 + armorAmount.toDouble())
         }
     }
 }

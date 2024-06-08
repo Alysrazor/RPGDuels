@@ -26,7 +26,7 @@ sealed class Unit {
     protected abstract val unitClass: UnitClass
     protected abstract var unitDefense: UnitDefense
     protected abstract var unitStat: UnitStat
-    protected abstract var spells: Set<Spell>
+    protected abstract var spells: Set<Spell>?
     protected abstract var powerType: PowerType
 
     // Atributos de clase
@@ -177,7 +177,7 @@ sealed class Unit {
     /**
      * @return las hechizos de la unidad
      */
-    fun getUnitSpells(): Set<Spell> = this.spells
+    fun getUnitSpells(): Set<Spell>? = this.spells
 
     /**
      * Establece las hechizos de la unidad
@@ -267,6 +267,15 @@ sealed class Unit {
             maxHealth
         else
             newHealth
+    }
+
+    fun updateHealth(amount: Int) {
+        if (amount < 0)
+            return
+        else if (amount > this.getHealth())
+            this.currentHealth = 0
+        else
+            this.currentHealth -= amount
     }
 
     /**
@@ -376,7 +385,11 @@ sealed class Unit {
         }
 
         when (this.powerType) {
-            PowerType.RAGE, PowerType.ENERGY -> this.maxPower = 100
+            PowerType.RAGE -> this.maxPower = 100
+            PowerType.ENERGY -> {
+                this.maxPower = 100
+                this.currentPower = this.maxPower
+            }
             PowerType.MANA -> {
                 this.maxPower = 10 + (this.level * 5) + (this.unitStat.stats.getValue(Stat.STAT_INTELLIGENCE) * 2) + (Stat.getModifierChart(this.unitStat.stats.getValue(Stat.STAT_INTELLIGENCE)) * 10)
                 this.currentPower = this.maxPower

@@ -95,6 +95,8 @@ data class Spell(
     fun getSpellDamage(caster: Unit): Int {
         val spellBonusStat = this.statModifier
         val unitStatModifier = Stat.getModifierChartForStat(caster.getUnitStats().getValue(spellBonusStat))
-        return this.baseDamage + Stat.getModifierChartForStat(unitStatModifier) * ((100 + unitStatModifier) / 100)
+
+        Log.d("Spell", "Daño de ${this.name}: ${this.baseDamage + Stat.getModifierChartForStat(unitStatModifier) * ((100 + unitStatModifier) / 100)}")
+        return this.baseDamage + Stat.getModifierChartForStat(unitStatModifier) * ((100.0 + unitStatModifier) / 100.0).toInt()
     }
 }

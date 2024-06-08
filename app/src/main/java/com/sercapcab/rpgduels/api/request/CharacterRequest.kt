@@ -55,6 +55,29 @@ suspend fun getCharacter(id: UUID, authCredentials: Pair<String, String>): Chara
     }
 }
 
+suspend fun getCharacterByName(name: String, authCredentials: Pair<String, String>): CharacterData? {
+    return withContext(Dispatchers.IO) {
+        try {
+            val retrofit = RetrofitSingleton.getRetrofitInstance()
+            val service = retrofit?.create(CharacterAPIService::class.java)
+
+            val authentication = Credentials.basic(authCredentials.first, authCredentials.second)
+
+            val call = service?.getCharacterByName(authHeader = authentication, name = name)
+            val response = call?.execute()
+
+            if (response?.isSuccessful == true) {
+                response.body()
+            } else {
+                null
+            }
+        } catch (ex: java.net.SocketTimeoutException) {
+            Log.e("CharacterRequest", ex.message.toString())
+            null
+        }
+    }
+}
+
 suspend fun addCharacter(character: CharacterData, authCredentials: Pair<String, String>): CharacterData? {
     return withContext(Dispatchers.IO) {
         try {

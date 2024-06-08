@@ -38,4 +38,14 @@
     <string name="string_error_wrong_credentials">Wrong username or password. Check it and try to log again.</string>
     <string name="string_error_wrong_email_pattern">You have to put a valid email. A valid email contains a \'@\' and a domain, like .com</string>
     <string name="string_account_already_exists">There is already an account with that email or username.</string>
+    <string name="logout_string">Log out</string>
+    <string name="string_select_character">Select Character</string>
+    <string name="string_error_select_character">You must select a character before entering a battle.</string>
+    <string name="string_victory">Victory!</string>
+    <string name="string_defeat">Defeat!</string>
+    <string name="string_victory_text">You have won the battle!</string>
+    <string name="string_defeat_text">You have lost the battle!</string>
+    <string name="string_version_title">Version 1.0</string>
+    <string name="string_version_classes_text">The four test character classes have been added: paladin, mage, warrior, and rogue.</string>
+    <string name="string_version_maps_text">The four test maps corresponding to the four character classes have also been added.</string>
 </resources>

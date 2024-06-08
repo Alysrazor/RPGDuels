@@ -25,4 +25,14 @@
     <string name="string_error_wrong_credentials">Usuario o contraseñas incorrectos. Compruébalos e inicia sesión de nuevo.</string>
     <string name="string_error_wrong_email_pattern">Debes proporcionar un correo electrónico válido. Un email válido tiene un \'@\' y un dominio como .com</string>
     <string name="string_account_already_exists">Ya hay una cuenta con ese nombre de usuario o correo electrónico.</string>
+    <string name="logout_string">Cerrar sesión</string>
+    <string name="string_select_character">Seleccionar Personaje</string>
+    <string name="string_error_select_character">Debes seleccionar un personaje antes de ir a la batalla.</string>
+    <string name="string_victory">¡Victoria!</string>
+    <string name="string_defeat">¡Derrota!</string>
+    <string name="string_victory_text">¡Has ganado el combate!</string>
+    <string name="string_defeat_text">¡Has perdido el combate!</string>
+    <string name="string_version_title">Versión 1.0</string>
+    <string name="string_version_classes_text">Se han añadido las cuatro clases de prueba de personajes: paladín, mago, luchador y pícaro.</string>
+    <string name="string_version_maps_text">También se han añadido los cuatro mapas de prueba que corresponden a las cuatro clases de personajes.</string>
 </resources>

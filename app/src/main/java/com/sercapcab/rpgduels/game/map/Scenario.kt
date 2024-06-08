@@ -1,10 +1,14 @@
 package com.sercapcab.rpgduels.game.map
 
+import android.app.Activity
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,20 +16,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableIntState
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -33,7 +38,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.google.gson.Gson
 import com.sercapcab.rpgduels.R
+import com.sercapcab.rpgduels.game.combat.CombatViewModel
+import com.sercapcab.rpgduels.game.combat.Turn
 import com.sercapcab.rpgduels.game.entity.Account
 import com.sercapcab.rpgduels.game.entity.Character
 import com.sercapcab.rpgduels.game.entity.Spell
@@ -44,6 +54,7 @@ import com.sercapcab.rpgduels.game.entity.unit.Stat
 import com.sercapcab.rpgduels.game.entity.unit.UnitClass
 import com.sercapcab.rpgduels.game.entity.unit.UnitDefense
 import com.sercapcab.rpgduels.game.entity.unit.UnitStat
+import com.sercapcab.rpgduels.ui.screen.MyAlertDialog
 import com.sercapcab.rpgduels.ui.screen.SpellButton
 import com.sercapcab.rpgduels.ui.screen.TextComposable
 import com.sercapcab.rpgduels.ui.screen.fontFamily
@@ -51,29 +62,26 @@ import java.util.Locale
 import java.util.UUID
 
 private const val TAG = "Scenario"
-private const val LIMIT_OF_TURNS = 50
-
-enum class TurnTest {
-    PLAYER, AI_PLAYER
-}
 
 @Composable
 fun Scenario(
-    player: Character,
-    playerAI: Character,
+    data: String?,
+    combatViewModel: CombatViewModel = viewModel(),
+    navController: NavController,
 ) {
-    // Variables de Jugadores
-    val characterHealth = rememberSaveable { mutableIntStateOf(player.getHealth()) }
-    val characterPower = rememberSaveable { mutableIntStateOf(player.getCurrentPower()) }
-    val characterAIHealth = rememberSaveable { mutableIntStateOf(playerAI.getHealth()) }
-    val characterAIPower = rememberSaveable { mutableIntStateOf(playerAI.getCurrentPower()) }
-    val characterSpells = rememberSaveable { mutableStateOf(player.getUnitSpells()) }
+    val characters = Gson().fromJson(data, Array<Character>::class.java)
 
-    // Variables del Escenario
-    val turnNo = rememberSaveable { mutableIntStateOf(1) }
-    val whosTurn = rememberSaveable { mutableStateOf(TurnTest.PLAYER) }
-    //val whoWon = rememberSaveable { mutableStateOf<Character?>(null) }
-    val buttonsEnabled = rememberSaveable { mutableStateOf(true) }
+    val player = characters?.getOrNull(0)
+    val playerAI = characters?.getOrNull(1)
+
+    LaunchedEffect(Unit) {
+        combatViewModel.startCombat(player!!, playerAI!!)
+        Log.d(TAG, player.toString())
+        Log.d(TAG, playerAI.toString())
+    }
+    val activity = LocalContext.current as? Activity
+    val uiState by combatViewModel.uiStateFlow.collectAsState()
+    val imageFilter by combatViewModel.imageFilter.collectAsState()
 
     // Layout del Escenario
     Box(
@@ -85,17 +93,16 @@ fun Scenario(
             contentScale = ContentScale.FillBounds,
             modifier = Modifier.fillMaxSize()
         )
-
         Column(
             modifier = Modifier.fillMaxSize(),
         ) {
             // Display Turn
             DisplayTurnUI(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(0.75f)
                     .padding(start = 10.dp, top = 20.dp, end = 10.dp),
-                whosTurn = whosTurn,
-                turnNo = turnNo
+                whosTurn = uiState.whosTurn,
+                turnNo = uiState.turnNo
             )
             Row(
                 modifier = Modifier
@@ -103,33 +110,64 @@ fun Scenario(
                     .padding(start = 10.dp, end = 10.dp)
             ) {
                 // Display Characters
+                val showImageFilterPlayer =
+                    if (uiState.whosTurn == Turn.ENEMY) imageFilter else Color.Transparent
+                val showImageFilterEnemy =
+                    if (uiState.whosTurn == Turn.PLAYER) imageFilter else Color.Transparent
                 DisplayCharacterUI(
                     modifier = Modifier
                         .weight(1f)
                         .padding(start = 10.dp, end = 10.dp),
-                    character = player,
-                    characterHealth = characterHealth,
-                    characterPower = characterPower
+                    character = player!!,
+                    characterHealth = uiState.playerHealth,
+                    characterPower = uiState.playerPower,
+                    imageFilter = showImageFilterPlayer
                 )
                 Spacer(modifier = Modifier.width(150.dp))
                 DisplayCharacterUI(
                     modifier = Modifier
                         .weight(1f)
                         .padding(start = 10.dp, end = 10.dp),
-                    character = playerAI,
-                    characterHealth = characterAIHealth,
-                    characterPower = characterAIPower,
-                    isReversed = true
+                    character = playerAI!!,
+                    characterHealth = uiState.playerAIHealth,
+                    characterPower = uiState.playerAIPower,
+                    isReversed = true,
+                    imageFilter = showImageFilterEnemy
                 )
             }
 
-            DisplayCharacterSpellsUI(
-                modifier = Modifier
-                    .weight(0.75f)
-                    .padding(start = 10.dp, end = 10.dp, bottom = 10.dp),
-                characterSpells = characterSpells,
-                buttonsEnabled = buttonsEnabled
-            )
+            uiState.playerSpells?.let {
+                DisplayCharacterSpellsUI(
+                    modifier = Modifier
+                        .weight(0.75f)
+                        .padding(start = 10.dp, end = 10.dp, bottom = 10.dp)
+                        .fillMaxWidth(),
+                    characterSpells = it.toList(),
+                    buttonsEnabled = uiState.buttonsEnabled,
+                    combatViewModel = combatViewModel
+                )
+            }
+
+            if (uiState.whoWon != null) {
+                Log.d(TAG, uiState.whoWon.toString())
+                MyAlertDialog(
+                    onDismissRequest = { navController.popBackStack() },
+                    dialogTitle = when (uiState.whoWon!!.getUnitName()) {
+                        player?.getUnitName() -> R.string.string_victory
+                        playerAI?.getUnitName() -> R.string.string_defeat
+                        else -> {
+                            R.string.string_error_text
+                        }
+                    },
+                    dialogText = when (uiState.whoWon!!.getUnitName()) {
+                        player?.getUnitName() -> R.string.string_victory_text
+                        playerAI?.getUnitName() -> R.string.string_defeat_text
+                        else -> {
+                            R.string.string_error_text
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -137,23 +175,23 @@ fun Scenario(
 @Composable
 private fun DisplayTurnUI(
     modifier: Modifier = Modifier,
-    whosTurn: MutableState<TurnTest>,
-    turnNo: MutableIntState,
+    whosTurn: Turn,
+    turnNo: Int,
 ) {
     Row(
         modifier = modifier,
     ) {
         TextComposable(
-            textId = when (whosTurn.value) {
-                TurnTest.PLAYER -> R.string.player_turn
-                TurnTest.AI_PLAYER -> R.string.enemy_turn
+            textId = when (whosTurn) {
+                Turn.PLAYER -> R.string.player_turn
+                Turn.ENEMY -> R.string.enemy_turn
             },
             modifier = Modifier
                 .weight(1f),
             textStyle = TextStyle(
-                color = when (whosTurn.value) {
-                    TurnTest.PLAYER -> Color.Blue
-                    TurnTest.AI_PLAYER -> Color.Red
+                color = when (whosTurn) {
+                    Turn.PLAYER -> Color.Blue
+                    Turn.ENEMY -> Color.Red
                 },
                 fontFamily = fontFamily,
                 fontSize = 32.sp
@@ -167,7 +205,7 @@ private fun DisplayTurnUI(
                 Locale.getDefault(),
                 "%s: %d",
                 stringResource(id = R.string.turn_string),
-                turnNo.intValue
+                turnNo
             ),
             textAlign = TextAlign.Center,
             style = TextStyle(
@@ -183,9 +221,10 @@ private fun DisplayTurnUI(
 private fun DisplayCharacterUI(
     modifier: Modifier = Modifier,
     character: Character,
-    characterHealth: MutableIntState,
-    characterPower: MutableIntState,
+    characterHealth: Int,
+    characterPower: Int,
     isReversed: Boolean = false,
+    imageFilter: Color = Color.Transparent,
 ) {
     Row(
         modifier = modifier
@@ -203,67 +242,76 @@ private fun DisplayCharacterUI(
                 } else {
                     Modifier
                         .weight(0.3f)
-                }
+                },
+                colorFilter = ColorFilter.tint(imageFilter, blendMode = BlendMode.SrcAtop)
             )
             Column(
                 modifier = Modifier.weight(0.33f)
             ) {
+                val powerColor: Color = when (character.getUnitPowerType()) {
+                    PowerType.NONE -> Color.Transparent
+                    PowerType.RAGE -> Color.Red
+                    PowerType.ENERGY -> Color.Yellow
+                    PowerType.MANA -> Color.Blue
+                }
+                val healthPercentage = characterHealth.toFloat() / character.getMaxHealth()
+                val powerPercentage = characterPower.toFloat() / character.getMaxPower()
+
                 Box(
-                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .width(136.dp)
+                        .height(15.dp)
                 ) {
-                    Box(
+                    LinearProgressIndicator(
+                        progress = { healthPercentage },
                         modifier = Modifier
-                            .width(136.dp)
-                            .height(15.dp)
-                            .background(Color.Transparent)
+                            .fillMaxWidth()
+                            .height(15.dp),
+                        color = Color.Green,
+                        trackColor = Color.Transparent
                     )
+                    // Box transparente para contener el texto
                     Box(
                         modifier = Modifier
-                            .width(136.dp)
-                            .height(15.dp)
-                            .background(Color.Green)
+                            .fillMaxSize()
+                            .background(Color.Transparent) // Fondo transparente
                     ) {
                         Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = "${characterHealth.intValue} / ${character.getMaxHealth()}",
+                            text = "$characterHealth / ${character.getMaxHealth()}",
+                            modifier = Modifier.align(Alignment.Center),
                             style = TextStyle(
                                 color = Color.Black,
-                                fontSize = 14.sp
-                            ),
-                            textAlign = TextAlign.Center
+                                fontSize = 10.sp
+                            )
                         )
                     }
                 }
-
                 Box(
-                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .width(136.dp)
+                        .height(15.dp)
                 ) {
-                    val powerColor: Color = when (character.getUnitPowerType()) {
-                        PowerType.NONE -> Color.Transparent
-                        PowerType.RAGE -> Color.Red
-                        PowerType.ENERGY -> Color.Yellow
-                        PowerType.MANA -> Color.Blue
-                    }
-                    Box(
+                    LinearProgressIndicator(
+                        progress = { powerPercentage },
                         modifier = Modifier
-                            .width(136.dp)
-                            .height(15.dp)
-                            .background(Color.Transparent)
+                            .fillMaxWidth()
+                            .height(15.dp),
+                        color = powerColor,
+                        trackColor = Color.Transparent
                     )
+                    // Box transparente para contener el texto
                     Box(
                         modifier = Modifier
-                            .width(136.dp)
-                            .height(15.dp)
-                            .background(powerColor)
+                            .fillMaxSize()
+                            .background(Color.Transparent) // Fondo transparente
                     ) {
                         Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = "${characterPower.intValue} / ${character.getMaxPower()}",
+                            text = "$characterPower / ${character.getMaxPower()}",
+                            modifier = Modifier.align(Alignment.Center),
                             style = TextStyle(
                                 color = Color.White,
-                                fontSize = 14.sp
-                            ),
-                            textAlign = TextAlign.Center
+                                fontSize = 10.sp
+                            )
                         )
                     }
                 }
@@ -272,26 +320,37 @@ private fun DisplayCharacterUI(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DisplayCharacterSpellsUI(
     modifier: Modifier = Modifier,
-    characterSpells: MutableState<Set<Spell>>,
-    buttonsEnabled: MutableState<Boolean>
+    characterSpells: List<Spell>,
+    buttonsEnabled: Boolean,
+    combatViewModel: CombatViewModel,
 ) {
-    LazyVerticalGrid(
+    FlowRow(
         modifier = modifier,
-        columns = GridCells.Fixed(2),
-        content = {
-            items(characterSpells.value.size)  {spell ->
-                SpellButton(
-                    text = characterSpells.value.elementAt(spell).name,
-                    onClick = {
-                        TODO("Not yet implemented")
-                    },
-                    enabled = buttonsEnabled
-                )
-            }
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        characterSpells.forEach { spell ->
+            SpellButton(
+                text = spell.name,
+                enabled = buttonsEnabled && combatViewModel.uiStateFlow.value.playerPower >= spell.basePowerCost,
+                onClick = {
+                    combatViewModel.performAction(spell)
+                },
+            )
         }
+    }
+}
+
+@Composable
+fun FistIcon(modifier: Modifier = Modifier) {
+    Icon(
+        painter = painterResource(id = R.drawable.fist_icon),
+        contentDescription = "Fist Icon",
+        modifier = modifier
     )
 }
 
@@ -302,39 +361,6 @@ private fun loadCharacterModel(character: Character): Int {
         UnitClass.CLASS_PALADIN -> R.drawable.character_paladin
         UnitClass.CLASS_ROGUE -> R.drawable.character_rogue
         else -> -1
-    }
-}
-
-private fun handlePlayerAction(
-    turnNo: MutableIntState,
-    whosTurn: MutableState<TurnTest>,
-    whoWon: MutableState<Character?>,
-    player: Character,
-    playerAI: Character,
-    characterHealth: MutableIntState,
-    characterAIHealth: MutableIntState
-) {
-    when {
-        turnNo.intValue > LIMIT_OF_TURNS && whosTurn.value == TurnTest.AI_PLAYER -> whoWon.value =
-            playerAI
-
-        characterHealth.intValue <= 0 -> whoWon.value = playerAI
-        characterAIHealth.intValue <= 0 -> whoWon.value = player
-        else -> {
-            Log.d(TAG, "Turn: $turnNo")
-            when (whosTurn.value) {
-                TurnTest.PLAYER -> {
-                    Log.d(TAG, "Player Turn")
-                    whosTurn.value = TurnTest.AI_PLAYER
-                }
-
-                TurnTest.AI_PLAYER -> {
-                    Log.d(TAG, "AI Player Turn")
-                    turnNo.intValue++
-                    whosTurn.value = TurnTest.PLAYER
-                }
-            }
-        }
     }
 }
 
@@ -385,7 +411,7 @@ fun ScenarioPreview() {
                 name = "Atacar",
                 description = "Ataca al objetivo con el arma",
                 spellSchool = SpellSchool.SCHOOL_SLASHING,
-                baseDamage = 5,
+                baseDamage = 1,
                 basePowerCost = 0,
                 statModifier = Stat.STAT_STRENGTH,
                 statMultiplier = 1.0
@@ -457,7 +483,18 @@ fun ScenarioPreview() {
                 Stat.STAT_CHARISMA to 14
             )
         ),
-        spells = setOf(),
+        spells = setOf(
+            Spell(
+                uuid = UUID.randomUUID(),
+                name = "Atacar",
+                description = "Ataca al objetivo con el arma",
+                spellSchool = SpellSchool.SCHOOL_SLASHING,
+                baseDamage = 1,
+                basePowerCost = 0,
+                statModifier = Stat.STAT_STRENGTH,
+                statMultiplier = 1.0
+            ),
+        ),
         powerType = PowerType.MANA,
         account = accountPlayerAI
     )
@@ -465,10 +502,9 @@ fun ScenarioPreview() {
     accountPlayer.activeCharacter = characterPlayer
     accountPlayer.activeCharacter = characterPlayerAI
 
-
-
+    val navController = NavController(LocalContext.current)
     Scenario(
-        player = characterPlayer,
-        playerAI = characterPlayerAI
+        data = Gson().toJson(arrayOf(characterPlayer, characterPlayerAI)),
+        navController = navController
     )
 }

@@ -249,6 +249,7 @@ private fun SignInContent(
 ) {
     val isValidUser = rememberSaveable { mutableStateOf(false) }
     val showInvalidUser = rememberSaveable { mutableStateOf(false) }
+    val preferencesManager = PreferencesManager(LocalContext.current)
     val scope = rememberCoroutineScope()
 
     val user = editText(
@@ -288,6 +289,7 @@ private fun SignInContent(
 
                                     accountFlow.collect{ acc ->
                                         account = acc
+                                        preferencesManager.saveUserData(username = user, password = password)
                                         navController.navigate(NavScreens.GameMenuScreen.route)
                                     }
                                 }.join()

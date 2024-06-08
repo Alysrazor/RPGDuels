@@ -15,10 +15,16 @@ interface CharacterAPIService {
         @Header("Authorization") authHeader: String,
     ): retrofit2.Call<List<CharacterData>>
 
-    @GET("character/{id}")
+    @GET("character/id/{id}")
     fun getCharacterById(
         @Header("Authorization") authHeader: String,
         @Path("id") id: UUID
+    ): retrofit2.Call<CharacterData>
+
+    @GET("character/name/{name}")
+    fun getCharacterByName(
+        @Header("Authorization") authHeader: String,
+        @Path("name") name: String
     ): retrofit2.Call<CharacterData>
 
     @POST("character")

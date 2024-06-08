@@ -32,7 +32,7 @@ class Creature(
     override var unitDefense: UnitDefense,
 
     @get:JvmName("getCreatureSpells")
-    override var spells: Set<Spell>,
+    override var spells: Set<Spell>?,
 
     @get:JvmName("getCreaturePowerType")
     override var powerType: PowerType = PowerType.NONE

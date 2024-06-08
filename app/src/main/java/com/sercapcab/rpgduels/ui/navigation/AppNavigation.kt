@@ -1,9 +1,13 @@
 package com.sercapcab.rpgduels.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.sercapcab.rpgduels.game.map.MapScreens
+import com.sercapcab.rpgduels.game.map.Scenario
 import com.sercapcab.rpgduels.ui.screen.LoginScreen
 import com.sercapcab.rpgduels.ui.screen.SplashScreen
 import com.sercapcab.rpgduels.ui.screen.game.GameMenuScreen
@@ -21,6 +25,13 @@ fun AppNavigation() {
         }
         composable(route = NavScreens.GameMenuScreen.route) {
             GameMenuScreen(navController = navController)
+        }
+        composable(
+            NavScreens.BattleScreen.route + "/{data}",
+            arguments = listOf(navArgument("data") { type = NavType.StringType })
+        ) {
+            val data = it.arguments?.getString("data")
+            Scenario(data, navController = navController)
         }
     }
 }

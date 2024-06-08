@@ -1,6 +1,7 @@
 package com.sercapcab.rpgduels.game.entity
 
 import com.sercapcab.rpgduels.Since
+import com.sercapcab.rpgduels.api.model.CharacterData
 import com.sercapcab.rpgduels.api.serializer.UUIDSerializer
 import com.sercapcab.rpgduels.game.entity.unit.PowerType
 import com.sercapcab.rpgduels.game.entity.unit.UnitClass
@@ -32,7 +33,7 @@ class Character(
     override var unitStat: UnitStat,
 
     @get:JvmName(name = "getCharacterSpells")
-    override var spells: Set<Spell>,
+    override var spells: Set<Spell>?,
 
     @get:JvmName(name = "getCharacterPowerType")
     override var powerType: PowerType,
@@ -50,5 +51,9 @@ class Character(
         this.level++
         updateHealthOnLevelOrConstitutionChange(this.level)
         updatePowerOnIntelligenceChangeOrLevelUp()
+    }
+
+    override fun toString(): String {
+        return "Character(uuid=$uuid, name='$name', level=$level, unitClass=$unitClass, unitDefense=$unitDefense, unitStat=$unitStat, spells=$spells, powerType=$powerType, characterXP=$characterXP, xpToNextLevel=$xpToNextLevel, account=$account)"
     }
 }
