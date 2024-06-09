@@ -193,15 +193,17 @@ private fun SignUpContent(
                                 scope.launch {
                                     account = getAccountByUsername(username = user, authCredentials = Pair(user, password))?.toAccount()
                                 }.join()
+
                                 Log.d(TAG, "Account: ${account.toString()}")
+
                                 scope.launch {
-                                    preferencesManager.firstLoginFlow.collect {firstLogin ->
-                                        if (firstLogin) {
-                                            preferencesManager.saveAllVariables(false, user, password, null)
-                                        }
-                                    }
+                                    preferencesManager.saveAllVariables(false, user, password, null)
+                                }.join()
+
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    Log.d(TAG, preferencesManager.getCredentials().toString())
+                                    navController.navigate(NavScreens.GameMenuScreen.route)
                                 }
-                                navController.navigate(NavScreens.GameMenuScreen.route)
                             }
                             else
                                 usernameOrEmailAlreadyInUse.value = true

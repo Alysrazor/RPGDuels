@@ -81,6 +81,7 @@ suspend fun getCharactersFromAccount(username: String, authCredentials: Pair<Str
             val response = call?.execute()
 
             if (response?.isSuccessful == true) {
+                Log.d("AccountRequest", authCredentials.first + authCredentials.second)
                 Log.d("AccountRequest", response.body().toString() + response.code().toString())
                 response.body()
             }
